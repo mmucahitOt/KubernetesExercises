@@ -1,6 +1,6 @@
 # KubernetesSubmissions
 
-## Chapter 1: Kubernetes basics
+## Chapter 2: Kubernetes basics
 
 ## Exercises
 
