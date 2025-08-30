@@ -33,4 +33,10 @@ else
   echo "--------------------------------"
   echo "Deployment deleted"
   echo "--------------------------------"
+
+  docker rmi $DOCKER_REGISTRY/log_output:latest
+
+  echo "--------------------------------"
+  echo "Docker image removed"
+  echo "--------------------------------"
 fi
