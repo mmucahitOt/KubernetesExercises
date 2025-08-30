@@ -1,0 +1,16 @@
+{
+  "name": "log-output",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "deploy": "bash scripts/kubernetes_deploy.sh",
+    "undeploy": "bash scripts/kubernetes_undeploy.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
+}
