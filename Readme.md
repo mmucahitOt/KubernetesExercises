@@ -4,4 +4,4 @@
 
 ## Exercises
 
-- [1.1 - Log Output Application](./log_output/)
+- [1.1](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
