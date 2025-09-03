@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-output-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-output-deployment
+  template:
+    metadata:
+      labels:
+        app: log-output-deployment
+    spec:
+      containers:
+        - name: log-output-container
+          image: mmucahit0/log_output:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"  
