@@ -10,11 +10,11 @@
 # Get the registry name from the command line arguments
 _DOCKER_REGISTRY=$1
 
-PORT=$2
+_PORT=$2
 
 echo "--------------------------------"
 echo "Docker Registry name: $_DOCKER_REGISTRY"
-echo "Port: $PORT"
+echo "Port: $_PORT"
 echo "--------------------------------"
 
 # Build the Docker image
@@ -59,15 +59,24 @@ echo "--------------------------------"
 
 # Export variables for substitution in manifest
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
-export PORT=$PORT
+export PORT=$_PORT
 
-# TODO: add port!!
 # Apply the Kubernetes manifest with substituted variables
 envsubst < manifests/deployment.yaml | kubectl apply -f -
 
 echo "--------------------------------" 
 echo "Deployments"
 kubectl get deployments
+
+echo "--------------------------------"
+echo "Waiting for deployment to become available..."
+kubectl rollout status deployment/todo-app-deployment --timeout=90s
+kubectl wait --for=condition=available deployment/todo-app-deployment --timeout=90s
+
+echo "--------------------------------"
+echo "PORT FORWARD -> 3003:${PORT}"
+echo "--------------------------------"
+kubectl port-forward deploy/todo-app-deployment 3003:${PORT} >/tmp/pf.log 2>&1 & echo $! >/tmp/pf.pid
 
 echo "--------------------------------"
 echo "Pods"
@@ -83,7 +92,7 @@ echo "--------------------------------"
 echo "Pod name: $POD_NAME"
 echo "--------------------------------"
 echo "Logs"
-kubectl logs -f $POD_NAME
+kubectl logs $POD_NAME
 
 echo "--------------------------------"
 echo "Deployment complete"

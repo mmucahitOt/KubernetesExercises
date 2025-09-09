@@ -1,11 +1,14 @@
 const express = require("express");
+const path = require("path");
 const config = require("./config");
 
-const port = config.port || 3000;
+const port = Number(config.port) || 3000;
 const app = express();
 
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/", (req, res) => {
-  res.send("Hello World");
+  res.sendFile(path.join(__dirname, "public", "todo.html"));
 });
 
 app.listen(port, () => {

@@ -15,6 +15,9 @@ spec:
       containers:
         - name: todo-app-container
           image: ${DOCKER_REGISTRY}/todo_app:latest
+          env:
+            - name: PORT
+              value: "${PORT}"
           resources:
             requests:
               memory: "128Mi"
