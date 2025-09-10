@@ -9,3 +9,4 @@
 - [1.3](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
 - [1.4](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [1.5](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
+- [1.6](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)

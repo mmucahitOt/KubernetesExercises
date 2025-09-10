@@ -79,6 +79,12 @@ echo "--------------------------------"
 kubectl port-forward deploy/todo-app-deployment 3003:${PORT} >/tmp/pf.log 2>&1 & echo $! >/tmp/pf.pid
 
 echo "--------------------------------"
+echo "NodePort service"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < manifests/service.yaml | kubectl apply -f -
+echo "--------------------------------"
+
+echo "--------------------------------"
 echo "Pods"
 kubectl get pods
 
