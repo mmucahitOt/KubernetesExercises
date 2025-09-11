@@ -28,27 +28,16 @@ else
   echo "Context switched to cluster"
   echo "--------------------------------"
 
-  kubectl delete -f ../manifests/deployment.yaml
+  kubectl delete service log-output-deployment-svc
+
+  echo "--------------------------------"
+  echo "Service deleted"
+  echo "--------------------------------"
+
+  kubectl delete deployment log-output-deployment
 
   echo "--------------------------------"
   echo "Deployment deleted"
-  echo "--------------------------------"
-
-  echo "--------------------------------"
-  echo "--------------------------------"
-  echo "Stopping cluster..."
-  echo "--------------------------------"
-  k3d cluster stop k3s-default 2>/dev/null || true
-  echo "--------------------------------"
-  echo "Cluster stopped"
-  echo "--------------------------------"
-  
-  echo "--------------------------------"
-  echo "Deleting cluster..."
-  echo "--------------------------------"
-  k3d cluster delete k3s-default 2>/dev/null || true
-  echo "--------------------------------"
-  echo "Cluster deleted"
   echo "--------------------------------"
 
   docker rmi $DOCKER_REGISTRY/log_output:latest
