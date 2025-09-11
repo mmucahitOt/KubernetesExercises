@@ -28,6 +28,18 @@ else
   echo "Context switched to cluster"
   echo "--------------------------------"
 
+  kubectl delete service todo-app-deployment-svc
+
+  echo "--------------------------------"
+  echo "Service deleted"
+  echo "--------------------------------"
+
+  kubectl delete ingress dwk-material-ingress
+
+  echo "--------------------------------"
+  echo "Ingress deleted"
+  echo "--------------------------------"
+
   kubectl delete deployment todo-app-deployment
 
   echo "--------------------------------"

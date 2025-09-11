@@ -11,3 +11,4 @@
 - [1.5](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [1.6](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [1.7](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
+- [1.8](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)

@@ -35,7 +35,7 @@ if [ -z "$EXISTING_CONTEXT" ]; then
   echo "--------------------------------"
   echo "There is no cluster"
   echo "--------------------------------"
-  k3d cluster create k3s-default --agents 2
+  k3d cluster create -p 8081:80@loadbalancer --agents 2
   kubectl config use-context k3d-k3s-default
   echo "--------------------------------"
   echo "Cluster created and context switched to it"
@@ -79,9 +79,16 @@ echo "--------------------------------"
 kubectl port-forward deploy/todo-app-deployment 3003:${PORT} >/tmp/pf.log 2>&1 & echo $! >/tmp/pf.pid
 
 echo "--------------------------------"
-echo "NodePort service"
+echo "ClusterApi Service"
 # Apply the Kubernetes manifest with substituted variables
 envsubst < manifests/service.yaml | kubectl apply -f -
+echo "--------------------------------"
+
+
+echo "--------------------------------"
+echo "Ingress Service"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < manifests/ingress.yaml | kubectl apply -f -
 echo "--------------------------------"
 
 echo "--------------------------------"
