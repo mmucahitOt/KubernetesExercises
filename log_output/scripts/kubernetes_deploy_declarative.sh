@@ -7,27 +7,38 @@
 # This script is used to deploy the log_output application to a Kubernetes cluster.
 # It is used to test the application in a Kubernetes environment.
 
-# Get the registry name from the command line arguments
+# Get the registry name and ports from the command line arguments
 _DOCKER_REGISTRY=$1
 
-_PORT=$2
-
+_LOG_OUTPUT_PORT=$2
+_PING_PONG_PORT=$3
 echo "--------------------------------"
 echo "Docker Registry name: $_DOCKER_REGISTRY"
-echo "Port: $_PORT"
+echo "Ports: $_LOG_OUTPUT_PORT $_PING_PONG_PORT"
 echo "--------------------------------"
 
-# Build the Docker image
-docker build -t log_output:latest .
+# Resolve directories relative to this script
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
+LOG_OUTPUT_DIR="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
+ROOT_DIR="$(cd -- "${LOG_OUTPUT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
+PING_PONG_DIR="${ROOT_DIR}/ping_pong"
+LOG_OUTPUT_MANIFESTS_DIR="${LOG_OUTPUT_DIR}/manifests"
+PING_PONG_MANIFESTS_DIR="${PING_PONG_DIR}/manifests"
+
+# Build the Docker images (use absolute contexts)
+docker build -t log_output:latest "${LOG_OUTPUT_DIR}"
+docker build -t ping_pong:latest "${PING_PONG_DIR}"
 echo "Docker image built"
 
-# Tag the image for Docker Hub
+# Tag the images for Docker Hub
 docker tag log_output:latest $_DOCKER_REGISTRY/log_output:latest
+docker tag ping_pong:latest $_DOCKER_REGISTRY/ping_pong:latest
 echo "Docker image tagged"
 
-# Push the Docker image to Docker Hub
+# Push the Docker images to Docker Hub
 docker push $_DOCKER_REGISTRY/log_output:latest
-echo "Docker image pushed to Docker Hub"
+docker push $_DOCKER_REGISTRY/ping_pong:latest
+echo "Docker images pushed to Docker Hub"
 
 EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
 
@@ -59,36 +70,40 @@ echo "--------------------------------"
 
 # Export variables for substitution in manifest
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
-export PORT=$_PORT
+export LOG_OUTPUT_PORT=$_LOG_OUTPUT_PORT
+export PING_PONG_PORT=$_PING_PONG_PORT
 
 # Apply the Kubernetes manifest with substituted variables
-envsubst < manifests/deployment.yaml | kubectl apply -f -
+envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
+
+echo "--------------------------------"
+echo "Waiting for deployments to become available..."
+kubectl rollout status deployment/log-output-deployment --timeout=300s
+kubectl wait --for=condition=available deployment/log-output-deployment --timeout=300s
+
+kubectl rollout status deployment/ping-pong-deployment --timeout=300s
+kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
 
 echo "--------------------------------" 
 echo "Deployments"
 kubectl get deployments
 
 echo "--------------------------------"
-echo "Waiting for deployment to become available..."
-kubectl rollout status deployment/log-output-deployment --timeout=90s
-kubectl wait --for=condition=available deployment/log-output-deployment --timeout=90s
-
-echo "--------------------------------"
-echo "PORT FORWARD -> 3003:${PORT}"
-echo "--------------------------------"
-kubectl port-forward deploy/log-output-deployment 3003:${PORT} >/tmp/pf.log 2>&1 & echo $! >/tmp/pf.pid
-
-echo "--------------------------------"
 echo "ClusterApi Service"
 # Apply the Kubernetes manifest with substituted variables
-envsubst < manifests/service.yaml | kubectl apply -f -
+envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
+echo "--------------------------------"
+
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${PING_PONG_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 echo "--------------------------------"
 
 
 echo "--------------------------------"
 echo "Ingress Service"
 # Apply the Kubernetes manifest with substituted variables
-envsubst < manifests/ingress.yaml | kubectl apply -f -
+envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
 echo "--------------------------------"
 
 echo "--------------------------------"
@@ -99,13 +114,10 @@ echo "--------------------------------"
 echo "Waiting for pod to be ready..."
 kubectl wait --for=condition=ready pod -l app=log-output-deployment --timeout=60s
 
-POD_NAME=$(kubectl get pods | grep "log-output-deployment" | awk '{print $1}')
-
 echo "--------------------------------"
-echo "Pod name: $POD_NAME"
+echo "Logs:"
 echo "--------------------------------"
-echo "Logs"
-kubectl logs $POD_NAME
+kubectl logs deploy/log-output-deployment --all-containers --tail=200
 
 echo "--------------------------------"
 echo "Deployment complete"

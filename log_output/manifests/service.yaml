@@ -9,4 +9,4 @@ spec:
   ports:
     - port: 2345
       protocol: TCP
-      targetPort: ${PORT}
+      targetPort: ${LOG_OUTPUT_PORT}

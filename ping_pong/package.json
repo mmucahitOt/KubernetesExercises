@@ -1,0 +1,18 @@
+{
+  "name": "ping-pong",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "deploy": "bash scripts/kubernetes_deploy_declarative.sh",
+    "undeploy": "bash scripts/kubernetes_undeploy_declarative.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "uuid": "^11.1.0"
+  }
+}

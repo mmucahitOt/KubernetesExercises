@@ -29,20 +29,23 @@ else
   echo "--------------------------------"
 
   kubectl delete service log-output-deployment-svc
+  kubectl delete service ping-pong-deployment-svc
 
   echo "--------------------------------"
-  echo "Service deleted"
+  echo "Services deleted"
   echo "--------------------------------"
 
   kubectl delete deployment log-output-deployment
+  kubectl delete deployment ping-pong-deployment
 
   echo "--------------------------------"
-  echo "Deployment deleted"
+  echo "Deployments deleted"
   echo "--------------------------------"
 
   docker rmi $DOCKER_REGISTRY/log_output:latest
+  docker rmi $DOCKER_REGISTRY/ping_pong:latest
 
   echo "--------------------------------"
-  echo "Docker image removed"
+  echo "Docker images removed"
   echo "--------------------------------"
 fi

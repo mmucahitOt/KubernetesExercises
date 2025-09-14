@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: log-output-deployment
+  name: ping-pong-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: log-output-deployment
+      app: ping-pong-deployment
   template:
     metadata:
       labels:
-        app: log-output-deployment
+        app: ping-pong-deployment
     spec:
       containers:
-        - name: log-output-container
-          image: ${DOCKER_REGISTRY}/log_output:latest
+        - name: ping-pong-container
+          image: ${DOCKER_REGISTRY}/ping_pong:latest
           env:
-            - name: LOG_OUTPUT_PORT
-              value: "${LOG_OUTPUT_PORT}"
+            - name: PING_PONG_PORT
+              value: "${PING_PONG_PORT}"
             - name: PORT
-              value: "${LOG_OUTPUT_PORT}"
+              value: "${PING_PONG_PORT}"
           ports:
-            - name: http
-              containerPort: ${LOG_OUTPUT_PORT}
+            - name: http-pingpong
+              containerPort: ${PING_PONG_PORT}
           resources:
             requests:
               memory: "128Mi"

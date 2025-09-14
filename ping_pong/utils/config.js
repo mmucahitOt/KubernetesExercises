@@ -1,5 +1,5 @@
 require("dotenv").config();
 
 module.exports = {
-  port: process.env.LOG_OUTPUT_PORT,
+  port: process.env.PING_PONG_PORT,
 };
