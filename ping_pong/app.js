@@ -5,7 +5,7 @@ const {
   requestCounterMiddleware,
 } = require("./middlewares/request-counter.middleware");
 
-const port = config.port || 3000;
+const port = config.port || 3002;
 const app = express();
 
 app.use(requestCounterMiddleware);

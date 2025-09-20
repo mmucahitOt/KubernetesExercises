@@ -6,13 +6,20 @@ spec:
   rules:
   - http:
       paths:
-      - path: /
+      - path: /logoutput
         pathType: Prefix
         backend:
           service:
             name: log-output-deployment-svc
             port:
               number: 2345
+      - path: /readoutput
+        pathType: Prefix
+        backend:
+          service:
+            name: read-output-svc
+            port:
+              number: 2347
       - path: /pingpong
         pathType: Prefix
         backend:

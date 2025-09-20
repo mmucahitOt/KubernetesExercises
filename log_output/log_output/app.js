@@ -1,13 +1,15 @@
 const express = require("express");
-const config = require("./config");
-const { generateUUID } = require("./helper");
+const config = require("./utils/config");
+const { generateUUID } = require("./utils/id-generator");
+const FileManager = require("./utils/file-manager");
 
 const port = config.port || 3000;
 const app = express();
+const fileManager = new FileManager();
 
 const RANDOM_STRING = generateUUID();
 
-app.get("/", (req, response) => {
+app.get("/logoutput", (req, response) => {
   const timestamp = new Date().toISOString();
   response.send(`
     timestamp: ${timestamp},
@@ -20,5 +22,7 @@ app.listen(port, () => {
 });
 
 setInterval(() => {
-  console.log(generateUUID());
+  const id = generateUUID();
+  console.log(id);
+  fileManager.log(config.logFilePath, id);
 }, 5000);

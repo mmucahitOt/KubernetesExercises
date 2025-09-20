@@ -4,43 +4,38 @@
 # the user should be logged in to Docker Hub before running this script
 # docker login
 
-# This script is used to deploy the log_output application to a Kubernetes cluster.
+# This script is used to deploy the read_output application to a Kubernetes cluster.
 # It is used to test the application in a Kubernetes environment.
 
 # Get the registry name and ports from the command line arguments
 _DOCKER_REGISTRY=$1
 
+_read_output_PORT=$2
+_PING_PONG_PORT=$3
 echo "--------------------------------"
 echo "Docker Registry name: $_DOCKER_REGISTRY"
-echo "Ports: $_LOG_OUTPUT_PORT $_PING_PONG_PORT"
+echo "Ports: $_read_output_PORT $_PING_PONG_PORT"
 echo "--------------------------------"
 
 # Resolve directories relative to this script
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
-LOG_OUTPUT_ROOT="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
-ROOT_DIR="$(cd -- "${LOG_OUTPUT_ROOT}/.." >/dev/null 2>&1 && pwd -P)"
-LOG_OUTPUT_DIR="${LOG_OUTPUT_ROOT}/log_output"
-READ_OUTPUT_DIR="${LOG_OUTPUT_ROOT}/read_output"
+read_output_DIR="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
+ROOT_DIR="$(cd -- "${read_output_DIR}/.." >/dev/null 2>&1 && pwd -P)"
 PING_PONG_DIR="${ROOT_DIR}/ping_pong"
-LOG_OUTPUT_ROOT_MANIFESTS_DIR="${LOG_OUTPUT_ROOT}/manifests"
-LOG_OUTPUT_MANIFESTS_DIR="${LOG_OUTPUT_DIR}/manifests"
-READ_OUTPUT_MANIFESTS_DIR="${READ_OUTPUT_DIR}/manifests"
+read_output_MANIFESTS_DIR="${read_output_DIR}/manifests"
 PING_PONG_MANIFESTS_DIR="${PING_PONG_DIR}/manifests"
 
 # Build the Docker images (use absolute contexts)
-docker build -t log_output:latest "${LOG_OUTPUT_DIR}"
-docker build -t read_output:latest "${READ_OUTPUT_DIR}"
+docker build -t read_output:latest "${read_output_DIR}"
 docker build -t ping_pong:latest "${PING_PONG_DIR}"
 echo "Docker image built"
 
 # Tag the images for Docker Hub
-docker tag log_output:latest $_DOCKER_REGISTRY/log_output:latest
 docker tag read_output:latest $_DOCKER_REGISTRY/read_output:latest
 docker tag ping_pong:latest $_DOCKER_REGISTRY/ping_pong:latest
 echo "Docker image tagged"
 
 # Push the Docker images to Docker Hub
-docker push $_DOCKER_REGISTRY/log_output:latest
 docker push $_DOCKER_REGISTRY/read_output:latest
 docker push $_DOCKER_REGISTRY/ping_pong:latest
 echo "Docker images pushed to Docker Hub"
@@ -75,19 +70,17 @@ echo "--------------------------------"
 
 # Export variables for substitution in manifest
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
-export LOG_OUTPUT_PORT=4000
-export PING_PONG_PORT=4001
-export READ_OUTPUT_PORT=4002
-export LOG_FILE_PATH="/usr/src/app/files/log.txt"
+export read_output_PORT=$_read_output_PORT
+export PING_PONG_PORT=$_PING_PONG_PORT
 
 # Apply the Kubernetes manifest with substituted variables
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
+envsubst < "${read_output_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 
 echo "--------------------------------"
 echo "Waiting for deployments to become available..."
-kubectl rollout status deployment/log-output-deployment --timeout=300s
-kubectl wait --for=condition=available deployment/log-output-deployment --timeout=300s
+kubectl rollout status deployment/read-output-deployment --timeout=300s
+kubectl wait --for=condition=available deployment/read-output-deployment --timeout=300s
 
 kubectl rollout status deployment/ping-pong-deployment --timeout=300s
 kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
@@ -99,11 +92,7 @@ kubectl get deployments
 echo "--------------------------------"
 echo "ClusterApi Service"
 # Apply the Kubernetes manifest with substituted variables
-envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
-echo "--------------------------------"
-
-# Apply the Kubernetes manifest with substituted variables
-envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
+envsubst < "${read_output_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 echo "--------------------------------"
 
 # Apply the Kubernetes manifest with substituted variables
@@ -114,7 +103,7 @@ echo "--------------------------------"
 echo "--------------------------------"
 echo "Ingress Service"
 # Apply the Kubernetes manifest with substituted variables
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
+envsubst < "${read_output_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
 echo "--------------------------------"
 
 echo "--------------------------------"
@@ -123,12 +112,12 @@ kubectl get pods
 
 echo "--------------------------------"
 echo "Waiting for pod to be ready..."
-kubectl wait --for=condition=ready pod -l app=log-output-deployment --timeout=60s
+kubectl wait --for=condition=ready pod -l app=read-output-deployment --timeout=60s
 
 echo "--------------------------------"
 echo "Logs:"
 echo "--------------------------------"
-kubectl logs deploy/log-output-deployment --all-containers --tail=200
+kubectl logs deploy/read-output-deployment --all-containers --tail=200
 
 echo "--------------------------------"
 echo "Deployment complete"

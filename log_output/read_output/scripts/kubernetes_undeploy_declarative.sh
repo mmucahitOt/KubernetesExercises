@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is used to undeploy the log_output application from a Kubernetes cluster.
+# This script is used to undeploy the read_output application from a Kubernetes cluster.
 # It is used to clean up the environment after testing.
 
 # Get the registry name from the command line arguments
@@ -28,21 +28,20 @@ else
   echo "Context switched to cluster"
   echo "--------------------------------"
 
-  kubectl delete service log-output-deployment-svc
+  kubectl delete service read-output-deployment-svc
   kubectl delete service ping-pong-deployment-svc
 
   echo "--------------------------------"
   echo "Services deleted"
   echo "--------------------------------"
 
-  kubectl delete deployment log-output-deployment
+  kubectl delete deployment read-output-deployment
   kubectl delete deployment ping-pong-deployment
 
   echo "--------------------------------"
   echo "Deployments deleted"
   echo "--------------------------------"
 
-  docker rmi $DOCKER_REGISTRY/log_output:latest
   docker rmi $DOCKER_REGISTRY/read_output:latest
   docker rmi $DOCKER_REGISTRY/ping_pong:latest
 

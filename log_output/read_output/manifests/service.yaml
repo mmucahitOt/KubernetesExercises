@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: read-output-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: log-output-deployment 
+  ports:
+    - port: 2347
+      protocol: TCP
+      targetPort: ${READ_OUTPUT_PORT}
