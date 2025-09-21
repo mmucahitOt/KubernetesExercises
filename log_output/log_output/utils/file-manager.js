@@ -8,6 +8,10 @@ class FileManager {
     this.setupGracefulShutdown();
   }
 
+  readFile(filename, callback) {
+    fs.readFile(filename, callback)
+  }
+
   getStream(filename) {
     if (!this.streams.has(filename)) {
       const stream = fs.createWriteStream(filename, {

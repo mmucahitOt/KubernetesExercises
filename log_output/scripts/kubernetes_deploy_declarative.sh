@@ -73,28 +73,35 @@ echo "--------------------------------"
 echo "Cluster started"
 echo "--------------------------------"
 
+# Create the directory for persistent storage
+echo "--------------------------------"
+echo "Creating storage directory on node"
+docker exec k3d-k3s-default-agent-0 mkdir -p /tmp/kube
+echo "--------------------------------"
+
 # Export variables for substitution in manifest
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
 export LOG_OUTPUT_PORT=4000
 export PING_PONG_PORT=4001
 export READ_OUTPUT_PORT=4002
 export LOG_FILE_PATH="/usr/src/app/files/log.txt"
+export REQUEST_COUNT_FILE_PATH="/usr/src/app/shared_files/count.txt"
 
 # Apply the Kubernetes manifest with substituted variables
 envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 
 echo "--------------------------------"
-echo "Waiting for deployments to become available..."
-kubectl rollout status deployment/log-output-deployment --timeout=300s
-kubectl wait --for=condition=available deployment/log-output-deployment --timeout=300s
 
-kubectl rollout status deployment/ping-pong-deployment --timeout=300s
-kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
+echo "Persistent Volumes"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/persistent_volume.yaml" | kubectl apply -f -
+echo "--------------------------------"
 
-echo "--------------------------------" 
-echo "Deployments"
-kubectl get deployments
+echo "Persistent Volume Claims"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/persistent_volume_claim.yaml" | kubectl apply -f -
+echo "--------------------------------"
 
 echo "--------------------------------"
 echo "ClusterApi Service"
@@ -115,6 +122,20 @@ echo "--------------------------------"
 echo "Ingress Service"
 # Apply the Kubernetes manifest with substituted variables
 envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
+echo "--------------------------------"
+
+echo "--------------------------------"
+echo "Waiting for deployments to become available..."
+kubectl rollout status deployment/log-output-deployment --timeout=300s
+kubectl wait --for=condition=available deployment/log-output-deployment --timeout=300s
+
+kubectl rollout status deployment/ping-pong-deployment --timeout=300s
+kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
+
+echo "--------------------------------" 
+echo "Deployments"
+kubectl get deployments
+
 echo "--------------------------------"
 
 echo "--------------------------------"

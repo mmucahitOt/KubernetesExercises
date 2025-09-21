@@ -15,17 +15,24 @@ spec:
       volumes:
         - name: shared-log-file
           emptyDir: {}
+        - name: shared-files
+          persistentVolumeClaim:
+            claimName: shared-claim
       containers:
         - name: log-output-container
           image: ${DOCKER_REGISTRY}/log_output:latest
           volumeMounts:
           - name: shared-log-file
             mountPath: /usr/src/app/files
+          - name: shared-files
+            mountPath: /usr/src/app/shared_files
           env:
             - name: LOG_OUTPUT_PORT
               value: "${LOG_OUTPUT_PORT}"
             - name: LOG_FILE_PATH
               value: "${LOG_FILE_PATH}"
+            - name: REQUEST_COUNT_FILE_PATH
+              value: "${REQUEST_COUNT_FILE_PATH}"
           ports:
             - name: http
               containerPort: ${LOG_OUTPUT_PORT}

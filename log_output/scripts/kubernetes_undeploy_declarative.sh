@@ -35,6 +35,18 @@ else
   echo "Services deleted"
   echo "--------------------------------"
 
+  kubectl delete pvc shared-claim
+
+  echo "--------------------------------"
+  echo "PVCs deleted"
+  echo "--------------------------------"
+
+  kubectl delete pv persistent-volume-pv
+
+  echo "--------------------------------"
+  echo "PV deleted"
+  echo "--------------------------------"
+
   kubectl delete deployment log-output-deployment
   kubectl delete deployment ping-pong-deployment
 

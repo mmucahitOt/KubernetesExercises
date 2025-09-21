@@ -9,12 +9,22 @@ const fileManager = new FileManager();
 
 const RANDOM_STRING = generateUUID();
 
-app.get("/logoutput", (req, response) => {
-  const timestamp = new Date().toISOString();
-  response.send(`
-    timestamp: ${timestamp},
-    random_string: ${RANDOM_STRING}
-    `);
+app.get("/logoutput", (req, res) => {
+  fileManager.readFile(config.requestCounterFilePath, (error, data) => {
+    const timestamp = new Date().toISOString();
+    if (error) {
+      console.log(error);
+      res.send(`
+        ${timestamp}: ${RANDOM_STRING}
+        Ping / Pong: 0
+        `);
+      return;
+    }
+    res.send(`
+      ${timestamp}: ${RANDOM_STRING}
+      Ping / Pong: ${data}
+      `);
+  });
 });
 
 app.listen(port, () => {
