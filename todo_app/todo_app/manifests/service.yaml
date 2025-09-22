@@ -9,4 +9,4 @@ spec:
   ports:
     - port: 2345
       protocol: TCP
-      targetPort: ${PORT}
+      targetPort: ${TODO_APP_PORT}

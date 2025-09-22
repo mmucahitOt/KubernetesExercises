@@ -7,27 +7,67 @@
 # This script is used to deploy the todo_app application to a Kubernetes cluster.
 # It is used to test the application in a Kubernetes environment.
 
-# Get the registry name from the command line arguments
+# Get the registry name and ports from the command line arguments
 _DOCKER_REGISTRY=$1
 
-_PORT=$2
+# Export variables for substitution in manifest
+export DOCKER_REGISTRY=$_DOCKER_REGISTRY
+export TODO_APP_PORT=4000
+export RANDOM_IMAGE_PATH="/usr/src/app/todo_app_files/image.txt"
+
 
 echo "--------------------------------"
 echo "Docker Registry name: $_DOCKER_REGISTRY"
-echo "Port: $_PORT"
+echo "Ports: $TODO_APP_PORT"
 echo "--------------------------------"
 
-# Build the Docker image
-docker build -t todo_app:latest .
+# Resolve directories relative to this script
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
+TODO_APP_ROOT="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
+ROOT_DIR="$(cd -- "${TODO_APP_ROOT}/.." >/dev/null 2>&1 && pwd -P)"
+TODO_APP_DIR="${TODO_APP_ROOT}/todo_app"
+FRONTEND_DIR="${TODO_APP_ROOT}/todo_app_frontend"
+FRONTEND_DIST_DIR="${FRONTEND_DIR}/dist"
+BACKEND_PUBLIC_DIR="${TODO_APP_DIR}/public"
+TODO_APP_ROOT_MANIFESTS_DIR="${TODO_APP_ROOT}/manifests"
+TODO_APP_MANIFESTS_DIR="${TODO_APP_DIR}/manifests"
+
+# Build frontend and move output to backend public
+echo "--------------------------------"
+echo "Building frontend (Vite)"
+echo "--------------------------------"
+if [ -d "${FRONTEND_DIR}" ]; then
+  pushd "${FRONTEND_DIR}" >/dev/null
+  if command -v npm >/dev/null 2>&1; then
+    npm ci || npm install
+    npm run build
+  else
+    echo "npm is not installed; cannot build frontend" >&2
+    exit 1
+  fi
+  popd >/dev/null
+
+  echo "--------------------------------"
+  echo "Copying frontend dist to backend public"
+  echo "--------------------------------"
+  mkdir -p "${BACKEND_PUBLIC_DIR}"
+  rm -rf "${BACKEND_PUBLIC_DIR}/"*
+  cp -R "${FRONTEND_DIST_DIR}/." "${BACKEND_PUBLIC_DIR}/"
+else
+  echo "Frontend directory not found at ${FRONTEND_DIR}; skipping frontend build"
+fi
+
+# Build the Docker image (use absolute context)
+docker build -t todo_app:latest "${TODO_APP_DIR}"
 echo "Docker image built"
 
-# Tag the image for Docker Hub
+# Tag the images for Docker Hub
 docker tag todo_app:latest $_DOCKER_REGISTRY/todo_app:latest
 echo "Docker image tagged"
 
-# Push the Docker image to Docker Hub
+# Push the Docker images to Docker Hub
 docker push $_DOCKER_REGISTRY/todo_app:latest
-echo "Docker image pushed to Docker Hub"
+echo "Docker images pushed to Docker Hub"
 
 EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
 
@@ -57,38 +97,52 @@ echo "--------------------------------"
 echo "Cluster started"
 echo "--------------------------------"
 
-# Export variables for substitution in manifest
-export DOCKER_REGISTRY=$_DOCKER_REGISTRY
-export PORT=$_PORT
+# Create the directory for persistent storage
+echo "--------------------------------"
+echo "Creating storage directory on node"
+docker exec k3d-k3s-default-agent-0 mkdir -p /tmp/kube
+echo "--------------------------------"
 
 # Apply the Kubernetes manifest with substituted variables
-envsubst < manifests/deployment.yaml | kubectl apply -f -
-
-echo "--------------------------------" 
-echo "Deployments"
-kubectl get deployments
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 
 echo "--------------------------------"
-echo "Waiting for deployment to become available..."
-kubectl rollout status deployment/todo-app-deployment --timeout=90s
-kubectl wait --for=condition=available deployment/todo-app-deployment --timeout=90s
 
+echo "Persistent Volumes"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/persistent_volume.yaml" | kubectl apply -f -
 echo "--------------------------------"
-echo "PORT FORWARD -> 3003:${PORT}"
+
+echo "Persistent Volume Claims"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/persistent_volume_claim.yaml" | kubectl apply -f -
 echo "--------------------------------"
-kubectl port-forward deploy/todo-app-deployment 3003:${PORT} >/tmp/pf.log 2>&1 & echo $! >/tmp/pf.pid
 
 echo "--------------------------------"
 echo "ClusterApi Service"
 # Apply the Kubernetes manifest with substituted variables
-envsubst < manifests/service.yaml | kubectl apply -f -
+envsubst < "${TODO_APP_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 echo "--------------------------------"
 
 
 echo "--------------------------------"
 echo "Ingress Service"
 # Apply the Kubernetes manifest with substituted variables
-envsubst < manifests/ingress.yaml | kubectl apply -f -
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
+echo "--------------------------------"
+
+echo "--------------------------------"
+echo "Waiting for deployments to become available..."
+kubectl rollout status deployment/todo-app-deployment --timeout=300s
+kubectl wait --for=condition=available deployment/todo-app-deployment --timeout=300s
+
+kubectl rollout status deployment/ping-pong-deployment --timeout=300s
+kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
+
+echo "--------------------------------" 
+echo "Deployments"
+kubectl get deployments
+
 echo "--------------------------------"
 
 echo "--------------------------------"
@@ -99,13 +153,10 @@ echo "--------------------------------"
 echo "Waiting for pod to be ready..."
 kubectl wait --for=condition=ready pod -l app=todo-app-deployment --timeout=60s
 
-POD_NAME=$(kubectl get pods | grep "todo-app-deployment" | awk '{print $1}')
-
 echo "--------------------------------"
-echo "Pod name: $POD_NAME"
+echo "Logs:"
 echo "--------------------------------"
-echo "Logs"
-kubectl logs $POD_NAME
+kubectl logs deploy/todo-app-deployment --all-containers --tail=200
 
 echo "--------------------------------"
 echo "Deployment complete"

@@ -16,8 +16,10 @@ spec:
         - name: todo-app-container
           image: ${DOCKER_REGISTRY}/todo_app:latest
           env:
-            - name: PORT
-              value: "${PORT}"
+            - name: TODO_APP_PORT
+              value: "${TODO_APP_PORT}"
+            - name: RANDOM_IMAGE_PATH
+              value: "${RANDOM_IMAGE_PATH}"
           resources:
             requests:
               memory: "128Mi"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is used to undeploy the todo_app application from a Kubernetes cluster.
+# This script is used to undeploy the log_output application from a Kubernetes cluster.
 # It is used to clean up the environment after testing.
 
 # Get the registry name from the command line arguments
@@ -31,24 +31,30 @@ else
   kubectl delete service todo-app-deployment-svc
 
   echo "--------------------------------"
-  echo "Service deleted"
+  echo "Services deleted"
   echo "--------------------------------"
 
-  kubectl delete ingress dwk-material-ingress
+  kubectl delete pvc todo-app-claim
 
   echo "--------------------------------"
-  echo "Ingress deleted"
+  echo "PVCs deleted"
+  echo "--------------------------------"
+
+  kubectl delete pv todo-app-claim
+
+  echo "--------------------------------"
+  echo "PV deleted"
   echo "--------------------------------"
 
   kubectl delete deployment todo-app-deployment
 
   echo "--------------------------------"
-  echo "Deployment deleted"
+  echo "Deployments deleted"
   echo "--------------------------------"
 
-  docker rmi $DOCKER_REGISTRY/todo-app:latest
+  docker rmi $DOCKER_REGISTRY/todo_output:latest
 
   echo "--------------------------------"
-  echo "Docker image removed"
+  echo "Docker images removed"
   echo "--------------------------------"
 fi

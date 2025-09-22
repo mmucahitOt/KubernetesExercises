@@ -1,18 +1,12 @@
 {
-  "name": "todo-app",
+  "name": "todo_app",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node app.js",
     "deploy": "bash scripts/kubernetes_deploy.sh",
     "undeploy": "bash scripts/kubernetes_undeploy.sh"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "uuid": "^11.1.0"
-  }
+  "description": ""
 }
