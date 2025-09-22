@@ -1,6 +1,6 @@
 // Environment configuration
 export const config = {
-  apiUrl: "http://localhost:8081",
+  apiUrl: import.meta.env.VITE_API_URL,
   apiTimeout: import.meta.env.VITE_API_TIMEOUT || 5000,
 };
 

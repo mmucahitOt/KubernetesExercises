@@ -14,6 +14,7 @@ _DOCKER_REGISTRY=$1
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
 export TODO_APP_PORT=4000
 export RANDOM_IMAGE_PATH="/usr/src/app/todo_app_files/image.txt"
+export VITE_API_URL="http://localhost:8081"
 
 
 echo "--------------------------------"
