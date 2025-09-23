@@ -1,7 +1,7 @@
 import { useState } from "react"
 
 export const TodoCreate = ({createTodo}) => {
-  const [todo, setTodo] = useState()
+  const [todo, setTodo] = useState("")
 
   const handleChangeTodo = (event) => {
     setTodo(event.target.value)

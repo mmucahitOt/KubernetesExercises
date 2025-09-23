@@ -1,7 +1,7 @@
 export const TodoList = ({todos}) => {
   return (
-    <list>
+    <ul>
       {todos.map((todo, index) => <li key={index}>{todo}</li>)}
-    </list>
+    </ul>
   )
 }

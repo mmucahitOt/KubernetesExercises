@@ -27,3 +27,15 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"  
+        - name: todo-app-backend-container
+          image: ${DOCKER_REGISTRY}/todo_app_backend:latest
+          env:
+            - name: TODO_APP_BACKEND_PORT
+              value: "${TODO_APP_BACKEND_PORT}"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"  

@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "deploy": "bash scripts/kubernetes_deploy.sh",
-    "undeploy": "bash scripts/kubernetes_undeploy.sh"
+    "undeploy": "bash scripts/kubernetes_undeploy.sh",
+    "sentRequestToPod": "bash scripts/send_request_to_pod.sh"
   },
   "author": "",
   "license": "ISC",

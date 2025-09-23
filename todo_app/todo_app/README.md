@@ -1,35 +1,32 @@
-# Log Output Application
+# todo_app (server)
 
-A Node.js application that generates and logs random UUID strings every 5 seconds. This project demonstrates containerization with Docker and deployment to Kubernetes clusters.
+## Brief
 
-**Features:**
+- Node.js server that serves the built React frontend and an image endpoint
+- Static site under `public/` served at `/`
+- Uses `RANDOM_IMAGE_PATH` for the `/randomimage` response
 
-- Generates random UUID v4 strings using the `uuid` package
-- Logs output to console every 5 seconds
-- Containerized with Docker for easy deployment
-- Includes Kubernetes deployment and undeployment scripts
-- Automated cluster management with k3d for local development
+## Endpoints
 
-**Technologies Used:**
+- `GET /` → serves `public/index.html`
+- `GET /randomimage` → returns a JPEG from `RANDOM_IMAGE_PATH` with no-cache headers
 
-- Node.js with Express
-- Docker for containerization
-- Kubernetes for orchestration
-- k3d for local Kubernetes cluster management
-
-**Usage:**
+## Scripts (from this folder)
 
 ```bash
-# Deploy to Kubernetes
-npm run deploy <docker-registry>
-
-# Undeploy from Kubernetes
-npm run undeploy <docker-registry>
+# Start locally
+npm run start
 ```
 
-**Project Structure:**
+## Manifests (manifests/)
 
-- `app.js` - Main application logic
-- `Dockerfile` - Container configuration
-- `scripts/kubernetes_deploy.sh` - Deployment automation
-- `scripts/kubernetes_undeploy.sh` - Cleanup automation
+- `service.yaml`
+  - kind: Service (`ClusterIP`)
+  - name: `todo-app-deployment-svc`
+  - selector: `app: todo-app-deployment`
+  - ports: `port 2345` → `targetPort ${TODO_APP_PORT}` (TCP)
+
+Notes:
+
+- Service is cluster-internal; reach via Ingress or `kubectl port-forward` in k3d.
+- Ensure Deployment exposes the container port matching `TODO_APP_PORT`.

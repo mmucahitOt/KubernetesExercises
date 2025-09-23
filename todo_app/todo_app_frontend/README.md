@@ -1,12 +1,24 @@
-# React + Vite
+# todo_app_frontend (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Brief
 
-Currently, two official plugins are available:
+- React frontend built with Vite; built assets are copied into `todo_app/public/` during deployment
+- Uses environment URLs provided at deploy time to call the backend
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Commands (from this folder)
 
-## Expanding the ESLint configuration
+```bash
+# Local dev with HMR
+npm run dev
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# Build for production
+npm run build
+
+# Preview built app locally
+npm run preview
+```
+
+Notes:
+
+- The deploy script sets `VITE_TODO_API_URL` and `VITE_TODO_BACKEND_API_URL` which the frontend can use to call the APIs.
+- The server (`todo_app`) serves the built `dist/` under `/`.

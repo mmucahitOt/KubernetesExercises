@@ -29,6 +29,7 @@ else
   echo "--------------------------------"
 
   kubectl delete service todo-app-deployment-svc
+  kubectl delete service todo-app-backend-deployment-svc
 
   echo "--------------------------------"
   echo "Services deleted"
@@ -40,7 +41,7 @@ else
   echo "PVCs deleted"
   echo "--------------------------------"
 
-  kubectl delete pv todo-app-claim
+  kubectl delete pv todo-app-volume
 
   echo "--------------------------------"
   echo "PV deleted"

@@ -1,6 +1,7 @@
 // Environment configuration
 export const config = {
-  apiUrl: import.meta.env.VITE_API_URL,
+  apiUrl: import.meta.env.VITE_TODO_API_URL,
+  backendApiUrl: import.meta.env.VITE_TODO_BACKEND_API_URL,
   apiTimeout: import.meta.env.VITE_API_TIMEOUT || 5000,
 };
 

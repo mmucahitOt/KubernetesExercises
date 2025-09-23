@@ -13,13 +13,14 @@ _DOCKER_REGISTRY=$1
 # Export variables for substitution in manifest
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
 export TODO_APP_PORT=4000
-export RANDOM_IMAGE_PATH="/usr/src/app/todo_app_files/image.txt"
-export VITE_API_URL="http://localhost:8081"
-
+export TODO_APP_BACKEND_PORT=4001
+export RANDOM_IMAGE_PATH="/app/files/image.jpeg"
+export VITE_TODO_API_URL="http://localhost:8081"
+export VITE_TODO_BACKEND_API_URL="http://localhost:8081"
 
 echo "--------------------------------"
 echo "Docker Registry name: $_DOCKER_REGISTRY"
-echo "Ports: $TODO_APP_PORT"
+echo "Ports: $TODO_APP_PORT, $TODO_APP_BACKEND_PORT"
 echo "--------------------------------"
 
 # Resolve directories relative to this script
@@ -27,11 +28,13 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -
 TODO_APP_ROOT="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
 ROOT_DIR="$(cd -- "${TODO_APP_ROOT}/.." >/dev/null 2>&1 && pwd -P)"
 TODO_APP_DIR="${TODO_APP_ROOT}/todo_app"
+TODO_APP_BACKEND_DIR="${TODO_APP_ROOT}/todo_app_backend"
 FRONTEND_DIR="${TODO_APP_ROOT}/todo_app_frontend"
 FRONTEND_DIST_DIR="${FRONTEND_DIR}/dist"
-BACKEND_PUBLIC_DIR="${TODO_APP_DIR}/public"
+TODO_PUBLIC_DIR="${TODO_APP_DIR}/public"
 TODO_APP_ROOT_MANIFESTS_DIR="${TODO_APP_ROOT}/manifests"
 TODO_APP_MANIFESTS_DIR="${TODO_APP_DIR}/manifests"
+TODO_APP_BACKEND_MANIFESTS_DIR="${TODO_APP_BACKEND_DIR}/manifests"
 
 # Build frontend and move output to backend public
 echo "--------------------------------"
@@ -51,23 +54,27 @@ if [ -d "${FRONTEND_DIR}" ]; then
   echo "--------------------------------"
   echo "Copying frontend dist to backend public"
   echo "--------------------------------"
-  mkdir -p "${BACKEND_PUBLIC_DIR}"
-  rm -rf "${BACKEND_PUBLIC_DIR}/"*
-  cp -R "${FRONTEND_DIST_DIR}/." "${BACKEND_PUBLIC_DIR}/"
+  mkdir -p "${TODO_PUBLIC_DIR}"
+  rm -rf "${TODO_PUBLIC_DIR}/"*
+  cp -R "${FRONTEND_DIST_DIR}/." "${TODO_PUBLIC_DIR}/"
 else
   echo "Frontend directory not found at ${FRONTEND_DIR}; skipping frontend build"
 fi
 
-# Build the Docker image (use absolute context)
+# Build the Docker images (use absolute context)
 docker build -t todo_app:latest "${TODO_APP_DIR}"
-echo "Docker image built"
+docker build -t todo_app_backend:latest "${TODO_APP_BACKEND_DIR}"
+
+echo "Docker images built"
 
 # Tag the images for Docker Hub
 docker tag todo_app:latest $_DOCKER_REGISTRY/todo_app:latest
-echo "Docker image tagged"
+docker tag todo_app_backend:latest $_DOCKER_REGISTRY/todo_app_backend:latest
+echo "Docker images tagged"
 
 # Push the Docker images to Docker Hub
 docker push $_DOCKER_REGISTRY/todo_app:latest
+docker push $_DOCKER_REGISTRY/todo_app_backend:latest
 echo "Docker images pushed to Docker Hub"
 
 EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
@@ -120,9 +127,12 @@ envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/persistent_volume_claim.yaml" | kubec
 echo "--------------------------------"
 
 echo "--------------------------------"
-echo "ClusterApi Service"
+echo "ClusterApi Services"
 # Apply the Kubernetes manifest with substituted variables
 envsubst < "${TODO_APP_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
+
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${TODO_APP_BACKEND_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 echo "--------------------------------"
 
 
@@ -136,9 +146,6 @@ echo "--------------------------------"
 echo "Waiting for deployments to become available..."
 kubectl rollout status deployment/todo-app-deployment --timeout=300s
 kubectl wait --for=condition=available deployment/todo-app-deployment --timeout=300s
-
-kubectl rollout status deployment/ping-pong-deployment --timeout=300s
-kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
 
 echo "--------------------------------" 
 echo "Deployments"
