@@ -8,7 +8,7 @@ const {
 const port = config.port || 3002;
 const app = express();
 
-app.get("/pingpong-count", (req, res) => {
+app.get("/pings", (req, res) => {
   res.send(`${requestCounter.getCount()}`);
 });
 
