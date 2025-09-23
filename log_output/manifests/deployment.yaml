@@ -31,8 +31,8 @@ spec:
               value: "${LOG_OUTPUT_PORT}"
             - name: LOG_FILE_PATH
               value: "${LOG_FILE_PATH}"
-            - name: REQUEST_COUNT_FILE_PATH
-              value: "${REQUEST_COUNT_FILE_PATH}"
+            - name: PING_PONG_URL
+              value: "${PING_PONG_URL}"
           ports:
             - name: http
               containerPort: ${LOG_OUTPUT_PORT}

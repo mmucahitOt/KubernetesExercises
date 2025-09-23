@@ -2,14 +2,17 @@ const express = require("express");
 const config = require("./utils/config");
 const {
   requestCounterMiddleware,
+  requestCounter,
 } = require("./middlewares/request-counter.middleware");
 
 const port = config.port || 3002;
 const app = express();
 
-app.use(requestCounterMiddleware);
+app.get("/pingpong-count", (req, res) => {
+  res.send(`${requestCounter.getCount()}`);
+});
 
-app.get("/pingpong", (req, res) => {
+app.get("/pingpong", requestCounterMiddleware, (req, res) => {
   res.send(`pong ${req.count}`);
 });
 

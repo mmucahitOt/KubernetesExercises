@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "sentRequestToPod": "bash scripts/send_request_to_pod.sh",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "bash scripts/kubernetes_deploy_declarative.sh",
-    "undeploy": "bash scripts/kubernetes_undeploy_declarative.sh"
+    "deploy": "bash scripts/kubernetes_deploy.sh",
+    "undeploy": "bash scripts/kubernetes_undeploy.sh"
   },
   "author": "",
   "license": "ISC",

@@ -1,35 +1,37 @@
-# Log Output Application
+# Log Output app
 
-A Node.js application that generates and logs random UUID strings every 5 seconds. This project demonstrates containerization with Docker and deployment to Kubernetes clusters.
+## Brief
 
-**Features:**
+- HTTP service that logs a fresh UUID to stdout every 5 seconds.
+- Exposes an endpoint that returns a timestamp, a process-scoped random UUID, and the ping/pong count fetched from another service.
 
-- Generates random UUID v4 strings using the `uuid` package
-- Logs output to console every 5 seconds
-- Containerized with Docker for easy deployment
-- Includes Kubernetes deployment and undeployment scripts
-- Automated cluster management with k3d for local development
+## Endpoints
 
-**Technologies Used:**
+- `GET /logoutput`
+  - Response contains:
+    - ISO timestamp
+    - Static UUID (per-process)
+    - `Ping / Pong: <count>` from `${PING_PONG_URL}/pingpong-count`
 
-- Node.js with Express
-- Docker for containerization
-- Kubernetes for orchestration
-- k3d for local Kubernetes cluster management
-
-**Usage:**
+## Scripts (from this folder)
 
 ```bash
-# Deploy to Kubernetes
-npm run deploy <docker-registry>
-
-# Undeploy from Kubernetes
-npm run undeploy <docker-registry>
+# Start locally
+npm run start
 ```
 
-**Project Structure:**
+## Manifests (manifests/)
 
-- `app.js` - Main application logic
-- `Dockerfile` - Container configuration
-- `scripts/kubernetes_deploy.sh` - Deployment automation
-- `scripts/kubernetes_undeploy.sh` - Cleanup automation
+- `service.yaml`
+  - kind: Service (`ClusterIP`)
+  - name: `log-output-deployment-svc`
+  - selector: `app: log-output-deployment`
+  - ports:
+    - port: `2345` (cluster-internal)
+    - targetPort: `${LOG_OUTPUT_PORT}` (container port)
+  - protocol: `TCP`
+
+Notes:
+
+- Service is cluster-internal; use `kubectl port-forward`, Ingress, or k3d port mapping to reach from host.
+- Ensure the Deployment/Pod template uses label `app: log-output-deployment` and exposes the container port matching `LOG_OUTPUT_PORT`.

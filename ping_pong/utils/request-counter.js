@@ -1,5 +1,8 @@
 class RequestCounter {
-  count = 0;
+  count;
+  constructor() {
+    this.count = 0;
+  }
 
   increaseCount() {
     this.count++;

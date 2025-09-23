@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node app.js",
-    "deploy": "bash scripts/kubernetes_deploy_declarative.sh",
-    "undeploy": "bash scripts/kubernetes_undeploy_declarative.sh"
+    "start": "node app.js"
   },
   "author": "",
   "license": "ISC",

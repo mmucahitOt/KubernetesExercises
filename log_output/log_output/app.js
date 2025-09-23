@@ -1,30 +1,20 @@
 const express = require("express");
 const config = require("./utils/config");
 const { generateUUID } = require("./utils/id-generator");
-const FileManager = require("./utils/file-manager");
+const { pingPong } = require("./services/ping-pong.service");
 
 const port = config.port || 3000;
 const app = express();
-const fileManager = new FileManager();
 
 const RANDOM_STRING = generateUUID();
 
-app.get("/logoutput", (req, res) => {
-  fileManager.readFile(config.requestCounterFilePath, (error, data) => {
-    const timestamp = new Date().toISOString();
-    if (error) {
-      console.log(error);
-      res.send(`
-        ${timestamp}: ${RANDOM_STRING}
-        Ping / Pong: 0
-        `);
-      return;
-    }
-    res.send(`
+app.get("/logoutput", async (req, res) => {
+  const timestamp = new Date().toISOString();
+  const count = await pingPong();
+  res.send(`
       ${timestamp}: ${RANDOM_STRING}
-      Ping / Pong: ${data}
+      Ping / Pong: ${count}
       `);
-  });
 });
 
 app.listen(port, () => {
@@ -34,5 +24,4 @@ app.listen(port, () => {
 setInterval(() => {
   const id = generateUUID();
   console.log(id);
-  fileManager.log(config.logFilePath, id);
 }, 5000);
