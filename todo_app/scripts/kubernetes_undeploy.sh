@@ -53,6 +53,12 @@ else
   echo "Deployments deleted"
   echo "--------------------------------"
 
+  kubectl delete namespaces project
+
+  echo "--------------------------------"
+  echo "project namespace deleted"
+  echo "--------------------------------"
+
   docker rmi $DOCKER_REGISTRY/todo_output:latest
 
   echo "--------------------------------"

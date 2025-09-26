@@ -111,6 +111,17 @@ echo "Creating storage directory on node"
 docker exec k3d-k3s-default-agent-0 mkdir -p /tmp/kube
 echo "--------------------------------"
 
+echo "Create namespace"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/namespace.yaml" | kubectl create -f -
+echo "--------------------------------"
+
+echo "--------------------------------"
+
+echo "Activate namespace"
+kubens project
+echo "--------------------------------"
+
 # Apply the Kubernetes manifest with substituted variables
 envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 
