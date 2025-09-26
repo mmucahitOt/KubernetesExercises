@@ -88,6 +88,20 @@ export LOG_FILE_PATH="/usr/src/app/files/log.txt"
 export REQUEST_COUNT_FILE_PATH="/usr/src/app/shared_files/count.txt"
 export PING_PONG_URL="http://ping-pong-deployment-svc:2346"
 
+echo "--------------------------------"
+
+echo "Create namespace"
+# Apply the Kubernetes manifest with substituted variables
+envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/namespace.yaml" | kubectl create -f -
+echo "--------------------------------"
+
+echo "--------------------------------"
+
+echo "Activate namespace"
+kubens exercises
+echo "--------------------------------"
+
+
 # Apply the Kubernetes manifest with substituted variables
 envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -

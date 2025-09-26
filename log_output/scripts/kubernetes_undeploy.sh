@@ -54,6 +54,12 @@ else
   echo "Deployments deleted"
   echo "--------------------------------"
 
+  kubectl delete namespaces exercises
+
+  echo "--------------------------------"
+  echo "exercises namespace deleted"
+  echo "--------------------------------"
+
   docker rmi $DOCKER_REGISTRY/log_output:latest
   docker rmi $DOCKER_REGISTRY/read_output:latest
   docker rmi $DOCKER_REGISTRY/ping_pong:latest
