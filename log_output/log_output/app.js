@@ -12,6 +12,8 @@ app.get("/logoutput", async (req, res) => {
   const timestamp = new Date().toISOString();
   const count = await pingPong();
   res.send(`
+      file content: ${config.getMessageFromFile()}
+      env variable: MESSAGE=${config.message}
       ${timestamp}: ${RANDOM_STRING}
       Ping / Pong: ${count}
       `);

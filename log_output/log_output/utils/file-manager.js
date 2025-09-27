@@ -9,7 +9,30 @@ class FileManager {
   }
 
   readFile(filename, callback) {
-    fs.readFile(filename, callback)
+    fs.readFile(filename, callback);
+  }
+
+  readFileSync(filename, encoding = "utf8") {
+    try {
+      return fs.readFileSync(filename, encoding);
+    } catch (error) {
+      console.error(`Error reading file ${filename}:`, error.message);
+      return null;
+    }
+  }
+
+  readMessageFromConfigFile(filePath) {
+    try {
+      const content = this.readFileSync(filePath);
+      if (!content) return null;
+
+      // Extract MESSAGE value from the file content
+      const match = content.match(/MESSAGE="([^"]+)"/);
+      return match ? match[1] : null;
+    } catch (error) {
+      console.error("Error reading message from config file:", error.message);
+      return null;
+    }
   }
 
   getStream(filename) {

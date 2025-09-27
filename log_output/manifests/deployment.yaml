@@ -14,6 +14,9 @@ spec:
         app: log-output-deployment
     spec:
       volumes:
+        - name: config-vol
+          configMap:
+            name: log-output-configmap
         - name: shared-log-file
           emptyDir: {}
         - name: shared-files
@@ -23,6 +26,8 @@ spec:
         - name: log-output-container
           image: ${DOCKER_REGISTRY}/log_output:latest
           volumeMounts:
+          - name: config-vol    
+            mountPath: "/config"
           - name: shared-log-file
             mountPath: /usr/src/app/files
           - name: shared-files
@@ -34,6 +39,11 @@ spec:
               value: "${LOG_FILE_PATH}"
             - name: PING_PONG_URL
               value: "${PING_PONG_URL}"
+            - name: INFORMATION_FILE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-configmap
+                  key: information_file_name
           ports:
             - name: http
               containerPort: ${LOG_OUTPUT_PORT}
