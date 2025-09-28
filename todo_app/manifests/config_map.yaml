@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-app-configmap
+  namespace: project
+data:
+  TODO_APP_PORT: "${TODO_APP_PORT}"
+  TODO_APP_BACKEND_PORT: "${TODO_APP_BACKEND_PORT}"
+  RANDOM_IMAGE_PATH: "${RANDOM_IMAGE_PATH}"

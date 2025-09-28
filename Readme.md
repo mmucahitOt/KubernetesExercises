@@ -22,3 +22,4 @@
 - [2.3](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
 - [2.4](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [2.5](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
+- [2.6](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
