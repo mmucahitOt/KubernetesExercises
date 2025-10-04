@@ -1,11 +1,9 @@
-const FileManager = require("../utils/file-manager");
 const RequestCounter = require("../utils/request-counter");
 
 const requestCounter = new RequestCounter();
 
-const requestCounterMiddleware = (req, res, next) => {
-  requestCounter.increaseCount();
-  const count = requestCounter.getCount();
+const requestCounterMiddleware = async (req, res, next) => {
+  const count = await requestCounter.increaseCount();
   console.log(count);
   req.count = count;
   next();

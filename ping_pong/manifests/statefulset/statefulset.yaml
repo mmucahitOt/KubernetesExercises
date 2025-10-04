@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ping-pong-stset
+spec:
+  serviceName: ping-pong-stset-db-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ping-pong-stset
+  template:
+    metadata:
+      labels:
+        app: ping-pong-stset
+    spec:
+      containers:
+        - name: ping-pong-container
+          image: ${DOCKER_REGISTRY}/ping_pong:latest
+          env:
+            - name: PING_PONG_PORT
+              value: "${PING_PONG_PORT}"
+            - name: PING_PONG_DB_URL
+              value: "${PING_PONG_DB_URL}"              
+        - name: ping-pong-db
+          image: ${DOCKER_REGISTRY}/ping_pong_db:latest
+          ports:
+            - name: web
+              containerPort: 5432
+          volumeMounts:
+            - name: ping-pong-data-storage
+              mountPath: /var/lib/postgresql/data 
+  volumeClaimTemplates:
+    - metadata:
+        name: ping-pong-data-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 100Mi

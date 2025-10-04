@@ -4,7 +4,7 @@
 # the user should be logged in to Docker Hub before running this script
 # docker login
 
-# This script is used to deploy the log_output application to a Kubernetes cluster.
+# This script is used to deploy the ping_pong application to a Kubernetes cluster.
 # It is used to test the application in a Kubernetes environment.
 
 # Colors for better readability
@@ -53,51 +53,39 @@ print_info "Ports: LOG_OUTPUT=4000, PING_PONG=4001, READ_OUTPUT=4002"
 
 # Resolve directories relative to this script
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
-LOG_OUTPUT_ROOT="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
-ROOT_DIR="$(cd -- "${LOG_OUTPUT_ROOT}/.." >/dev/null 2>&1 && pwd -P)"
-LOG_OUTPUT_DIR="${LOG_OUTPUT_ROOT}/log_output"
-READ_OUTPUT_DIR="${LOG_OUTPUT_ROOT}/read_output"
+PING_PONG_ROOT="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
+ROOT_DIR="$(cd -- "${PING_PONG_ROOT}/.." >/dev/null 2>&1 && pwd -P)"
 PING_PONG_DIR="${ROOT_DIR}/ping_pong"
-LOG_OUTPUT_ROOT_MANIFESTS_DIR="${LOG_OUTPUT_ROOT}/manifests"
-LOG_OUTPUT_MANIFESTS_DIR="${LOG_OUTPUT_DIR}/manifests"
-READ_OUTPUT_MANIFESTS_DIR="${READ_OUTPUT_DIR}/manifests"
-PING_PONG_MANIFESTS_DIR="${PING_PONG_DIR}/deployment/manifests"
+PING_PONG_MANIFESTS_DIR="${PING_PONG_DIR}/manifests/statefulset"
 
 # Build the Docker images (use absolute contexts)
 print_header "🐳 BUILDING DOCKER IMAGES"
-print_info "Building log_output image..."
-docker build -t log_output:latest "${LOG_OUTPUT_DIR}"
-print_success "log_output image built"
-
-print_info "Building read_output image..."
-docker build -t read_output:latest "${READ_OUTPUT_DIR}"
-print_success "read_output image built"
 
 print_info "Building ping_pong image..."
 docker build -t ping_pong:latest "${PING_PONG_DIR}"
 print_success "ping_pong image built"
 
+print_info "Building ping_pong_db image..."
+docker build -t ping_pong_db:latest "${PING_PONG_DIR}/database"
+print_success "ping_pong_db image built"
+
 # Tag the images for Docker Hub
 print_header "🏷️  TAGGING IMAGES FOR DOCKER HUB"
-docker tag log_output:latest $_DOCKER_REGISTRY/log_output:latest
-docker tag read_output:latest $_DOCKER_REGISTRY/read_output:latest
 docker tag ping_pong:latest $_DOCKER_REGISTRY/ping_pong:latest
+docker tag ping_pong_db:latest $_DOCKER_REGISTRY/ping_pong_db:latest
 print_success "All images tagged for Docker Hub"
+
 
 # Push the Docker images to Docker Hub
 print_header "📤 PUSHING IMAGES TO DOCKER HUB"
-print_info "Pushing log_output image..."
-docker push $_DOCKER_REGISTRY/log_output:latest
-print_success "log_output pushed"
-
-print_info "Pushing read_output image..."
-docker push $_DOCKER_REGISTRY/read_output:latest
-print_success "read_output pushed"
 
 print_info "Pushing ping_pong image..."
 docker push $_DOCKER_REGISTRY/ping_pong:latest
 print_success "ping_pong pushed"
 
+print_info "Pushing ping_pong_db image..."
+docker push $_DOCKER_REGISTRY/ping_pong_db:latest
+print_success "ping_pong_db pushed"
 EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
 
 print_header "☸️  KUBERNETES CLUSTER SETUP"
@@ -128,76 +116,30 @@ print_success "Storage directory created"
 # Export variables for substitution in manifest
 print_header "🔧 CONFIGURING ENVIRONMENT VARIABLES"
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
-export LOG_OUTPUT_PORT=4000
 export PING_PONG_PORT=4001
-export READ_OUTPUT_PORT=4002
 export LOG_FILE_PATH="/usr/src/app/files/log.txt"
 export REQUEST_COUNT_FILE_PATH="/usr/src/app/shared_files/count.txt"
 export PING_PONG_URL="http://ping-pong-deployment-svc:2346"
+export PING_PONG_DB_URL="postgres://pingpong_user:pingpong_password@localhost:5432/pingpong_db"
 print_success "Environment variables configured"
 
-print_header "📁 NAMESPACE SETUP"
-print_info "Creating namespace..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/namespace.yaml" | kubectl create -f -
-print_success "Namespace created"
-
-print_info "Activating namespace..."
-kubens exercises
-print_success "Namespace activated"
 
 # Apply the Kubernetes manifest with substituted variables
 print_header "📋 APPLYING KUBERNETES MANIFESTS"
-print_info "Applying ConfigMap..."
-kubectl apply -f "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/config_map.yaml"
-print_success "ConfigMap applied"
 
-print_info "Applying Deployments..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
-envsubst < "${PING_PONG_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
-print_success "Deployments applied"
+print_info "Applying Statefulses..."
+envsubst < "${PING_PONG_MANIFESTS_DIR}/statefulset.yaml" | kubectl apply -f -
+print_success "Statefulset applied"
 
-print_info "Applying Persistent Volumes..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/persistent_volume.yaml" | kubectl apply -f -
-print_success "Persistent Volumes applied"
-
-print_info "Applying Persistent Volume Claims..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/persistent_volume_claim.yaml" | kubectl apply -f -
-print_success "Persistent Volume Claims applied"
 
 print_info "Applying Services..."
-envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
-envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
-envsubst < "${PING_PONG_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/headless_service.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/cluster_ip_service.yaml" | kubectl apply -f -
 print_success "Services applied"
 
 print_info "Applying Ingress..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
 print_success "Ingress applied"
-
-print_header "⏳ WAITING FOR DEPLOYMENTS"
-print_info "Waiting for log-output-deployment to be available..."
-kubectl rollout status deployment/log-output-deployment --timeout=300s
-kubectl wait --for=condition=available deployment/log-output-deployment --timeout=300s
-print_success "log-output-deployment is ready"
-
-print_info "Waiting for ping-pong-deployment to be available..."
-kubectl rollout status deployment/ping-pong-deployment --timeout=300s
-kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
-print_success "ping-pong-deployment is ready"
-
-print_header "📊 DEPLOYMENT STATUS"
-print_info "Deployments:"
-kubectl get deployments
-
-print_info "Pods:"
-kubectl get pods
-
-print_info "Waiting for pods to be ready..."
-kubectl wait --for=condition=ready pod -l app=log-output-deployment --timeout=60s
-print_success "All pods are ready"
-
-print_header "📝 APPLICATION LOGS"
-kubectl logs deploy/log-output-deployment --all-containers --tail=200
 
 print_header "🎉 DEPLOYMENT COMPLETE"
 print_success "All services deployed successfully!"

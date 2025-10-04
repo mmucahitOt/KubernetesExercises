@@ -1,15 +1,20 @@
+const { CountRepository } = require("../repository/count-repository");
+
 class RequestCounter {
-  count;
+  countRepository;
   constructor() {
-    this.count = 0;
+    this.countRepository = new CountRepository();
   }
 
-  increaseCount() {
-    this.count++;
+  async increaseCount() {
+    const result = await this.countRepository.incrementCountByOne();
+    return result.dataValues.count;
   }
 
-  getCount() {
-    return this.count;
+  async getCount() {
+    const result = await this.countRepository.getCurrentCount();
+    console.log("data", result.dataValues);
+    return result.dataValues.count;
   }
 }
 

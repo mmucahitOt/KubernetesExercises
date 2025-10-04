@@ -4,12 +4,15 @@ const {
   requestCounterMiddleware,
   requestCounter,
 } = require("./middlewares/request-counter.middleware");
+const { connectToDb } = require("./utils/db-config");
+
+connectToDb();
 
 const port = config.port || 3002;
 const app = express();
 
-app.get("/pings", (req, res) => {
-  res.send(`${requestCounter.getCount()}`);
+app.get("/pings", async (req, res) => {
+  res.send(`${await requestCounter.getCount()}`);
 });
 
 app.get("/pingpong", requestCounterMiddleware, (req, res) => {
