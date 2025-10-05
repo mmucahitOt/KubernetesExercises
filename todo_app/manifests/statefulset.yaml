@@ -1,17 +1,18 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: todo-app-deployment
+  name: todo-app-stset
   namespace: project
 spec:
+  serviceName: todo-app-stset-db-svc
   replicas: 1
   selector:
     matchLabels:
-      app: todo-app-deployment
+      app: todo-app-stset
   template:
     metadata:
       labels:
-        app: todo-app-deployment
+        app: todo-app-stset
     spec:
       volumes:
         - name: todo-app-config-vol
@@ -33,26 +34,44 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: todo-app-configmap
-                  key: RANDOM_IMAGE_PATH
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
-              memory: "256Mi"
-              cpu: "200m"  
+                  key: RANDOM_IMAGE_PATH 
         - name: todo-app-backend-container
           image: ${DOCKER_REGISTRY}/todo_app_backend:latest
+          volumeMounts:
+            - name: todo-app-config-vol 
+              mountPath: "/config"
           env:
             - name: TODO_APP_BACKEND_PORT
               valueFrom:
                 configMapKeyRef:
                   name: todo-app-configmap
                   key: TODO_APP_BACKEND_PORT
+            - name: TODO_APP_BACKEND_DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-app-configmap
+                  key: TODO_APP_BACKEND_DB_URL 
           resources:
             requests:
               memory: "128Mi"
               cpu: "100m"
             limits:
               memory: "256Mi"
-              cpu: "200m"  
+              cpu: "200m"           
+        - name: todo-app-backend-db
+          image: ${DOCKER_REGISTRY}/todo_app_backend_db:latest
+          ports:
+            - name: web
+              containerPort: 5432
+          volumeMounts:
+            - name: todo-app-data-storage
+              mountPath: /var/lib/postgresql/data 
+  volumeClaimTemplates:
+    - metadata:
+        name: todo-app-data-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 100Mi

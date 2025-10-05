@@ -4,7 +4,7 @@
 # the user should be logged in to Docker Hub before running this script
 # docker login
 
-# This script is used to deploy the todo_app application to a Kubernetes cluster.
+# This script is used to statefulset the todo_app application to a Kubernetes cluster.
 # It is used to test the application in a Kubernetes environment.
 
 # Colors for better readability
@@ -51,11 +51,13 @@ _DOCKER_REGISTRY=$1
 export DOCKER_REGISTRY=$_DOCKER_REGISTRY
 export TODO_APP_PORT=4000
 export TODO_APP_BACKEND_PORT=4001
+export TODO_APP_BACKEND_DB_URL="postgres://todo_user:todo_password@localhost:5432/todo_db"
 export RANDOM_IMAGE_PATH="/app/files/image.jpeg"
 export VITE_TODO_API_URL="http://localhost:8081"
 export VITE_TODO_BACKEND_API_URL="http://localhost:8081"
+export 
 
-print_header "🚀 TODO APP DEPLOYMENT STARTING"
+print_header "🚀 TODO APP STATEFULSET STARTING"
 print_info "Docker Registry: $_DOCKER_REGISTRY"
 print_info "Ports: TODO_APP=4000, TODO_APP_BACKEND=4001"
 
@@ -65,6 +67,7 @@ TODO_APP_ROOT="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd -P)"
 ROOT_DIR="$(cd -- "${TODO_APP_ROOT}/.." >/dev/null 2>&1 && pwd -P)"
 TODO_APP_DIR="${TODO_APP_ROOT}/todo_app"
 TODO_APP_BACKEND_DIR="${TODO_APP_ROOT}/todo_app_backend"
+TODO_APP_BACKEND_DB_DIR="${TODO_APP_ROOT}/todo_app_backend_db"
 FRONTEND_DIR="${TODO_APP_ROOT}/todo_app_frontend"
 FRONTEND_DIST_DIR="${FRONTEND_DIR}/dist"
 TODO_PUBLIC_DIR="${TODO_APP_DIR}/public"
@@ -110,10 +113,16 @@ print_info "Building todo_app_backend image..."
 docker build -t todo_app_backend:latest "${TODO_APP_BACKEND_DIR}"
 print_success "todo_app_backend image built"
 
+print_info "Building todo_app_backend_db image..."
+docker build -t todo_app_backend_db:latest "${TODO_APP_BACKEND_DB_DIR}"
+print_success "todo_app_backend image built"
+
+
 # Tag the images for Docker Hub
 print_header "🏷️  TAGGING IMAGES FOR DOCKER HUB"
 docker tag todo_app:latest $_DOCKER_REGISTRY/todo_app:latest
 docker tag todo_app_backend:latest $_DOCKER_REGISTRY/todo_app_backend:latest
+docker tag todo_app_backend_db:latest $_DOCKER_REGISTRY/todo_app_backend_db:latest
 print_success "All images tagged for Docker Hub"
 
 # Push the Docker images to Docker Hub
@@ -124,6 +133,10 @@ print_success "todo_app pushed"
 
 print_info "Pushing todo_app_backend image..."
 docker push $_DOCKER_REGISTRY/todo_app_backend:latest
+print_success "todo_app_backend pushed"
+
+print_info "Pushing todo_app_backend_db image..."
+docker push $_DOCKER_REGISTRY/todo_app_backend_db:latest
 print_success "todo_app_backend pushed"
 
 EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
@@ -167,9 +180,9 @@ kubens project
 print_success "Namespace activated"
 
 print_header "📋 APPLYING KUBERNETES MANIFESTS"
-print_info "Applying Deployment..."
-envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
-print_success "Deployment applied"
+print_info "Applying Stateful Set..."
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/statefulset.yaml" | kubectl apply -f -
+print_success "Stateful Set applied"
 
 print_info "Applying Persistent Volumes..."
 kubectl apply -f "${TODO_APP_ROOT_MANIFESTS_DIR}/persistent_volume.yaml"
@@ -182,33 +195,34 @@ print_success "Persistent Volume Claims applied"
 print_info "Applying Services..."
 envsubst < "${TODO_APP_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 envsubst < "${TODO_APP_BACKEND_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
+envsubst < "${TODO_APP_MANIFESTS_DIR}/headless_service.yaml" | kubectl apply -f -
 print_success "Services applied"
 
 print_info "Applying Ingress..."
 envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
 print_success "Ingress applied"
 
-print_header "⏳ WAITING FOR DEPLOYMENTS"
-print_info "Waiting for todo-app-deployment to be available..."
-kubectl rollout status deployment/todo-app-deployment --timeout=300s
-kubectl wait --for=condition=available deployment/todo-app-deployment --timeout=300s
-print_success "todo-app-deployment is ready"
+print_header "⏳ WAITING FOR STATEFULSET"
+print_info "Waiting for todo-app-stset to be available..."
+kubectl rollout status statefulset/todo-app-stset --timeout=300s
+kubectl wait --for=condition=available statefulset/todo-app-stset --timeout=300s
+print_success "todo-app-stset is ready"
 
-print_header "📊 DEPLOYMENT STATUS"
-print_info "Deployments:"
-kubectl get deployments
+print_header "📊 STATEFULSET STATUS"
+print_info "Stateful sets:"
+kubectl get statefulsets
 
 print_info "Pods:"
 kubectl get pods
 
 print_info "Waiting for pods to be ready..."
-kubectl wait --for=condition=ready pod -l app=todo-app-deployment --timeout=60s
+kubectl wait --for=condition=ready pod -l app=todo-app-stset --timeout=60s
 print_success "All pods are ready"
 
 print_header "📝 APPLICATION LOGS"
-kubectl logs deploy/todo-app-deployment --all-containers --tail=200
+kubectl logs statefulset/todo-app-stset --all-containers --tail=200
 
-print_header "🎉 TODO APP DEPLOYMENT COMPLETE"
-print_success "Todo app deployed successfully!"
+print_header "🎉 TODO APP STATEFULSET COMPLETE"
+print_success "Todo app statefulseted successfully!"
 print_info "Your todo application is now running in Kubernetes"
 

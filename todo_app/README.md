@@ -18,9 +18,8 @@ All deployment and undeployment scripts now feature:
 
 ## Manifests (`manifests/`)
 
-- `deployment.yaml`: Deployments, env vars, volumes, labels for the stack
-- `persistent_volume.yaml`: PersistentVolume backing storage
-- `persistent_volume_claim.yaml`: PVC used by the stack
+- `statefulset.yaml`: StatefulSet spec for the todo app (stable identity + persistent storage)
+- `headless_service.yaml`: Headless Service for stable DNS to stateful Pods
 - `ingress.yaml`: Ingress to expose services via the k3d load balancer
 - `config_map.yaml`: Configuration data for the application
 
@@ -34,7 +33,7 @@ All deployment and undeployment scripts now feature:
 - 🐳 **Docker image building** with step-by-step feedback
 - 📤 **Image pushing** to Docker Hub with status updates
 - ☸️ **Kubernetes cluster** setup and management
-- 📋 **Manifest application** with clear progress indicators
+- 📋 **Manifest application** (applies StatefulSet + Services/Ingress) with clear progress indicators
 - ⏳ **Deployment waiting** with real-time status updates
 - 🎉 **Completion confirmation** with final status
 
@@ -100,6 +99,7 @@ npm run undeploy <docker-registry>
 
 - Services are `ClusterIP` (in-cluster). Use `kubectl port-forward`/Ingress/k3d `--port` for host access.
 - The deploy script sets env needed by manifests (e.g., `TODO_APP_PORT`, `TODO_APP_BACKEND_PORT`, `VITE_TODO_*`).
+- The application is deployed as a **StatefulSet** to persist data and provide stable Pod identity.
 - All scripts now provide **real-time feedback** with **color-coded status** and **progress indicators**.
 - **Frontend build process** is fully integrated with Vite and includes dependency management.
 - **Error handling** is improved with clear error messages and troubleshooting guidance.

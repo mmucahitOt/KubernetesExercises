@@ -62,21 +62,23 @@ else
   print_header "🗑️  DELETING TODO APP RESOURCES"
   
   print_info "Deleting Services..."
-  kubectl delete service todo-app-deployment-svc
-  kubectl delete service todo-app-backend-deployment-svc
+  kubectl delete service todo-app-svc
+  kubectl delete service todo-app-backend-svc
+  kubectl delete todo-stset-db-svc
   print_success "Services deleted"
 
   print_info "Deleting Persistent Volume Claims..."
   kubectl delete pvc todo-app-claim
+  kubectl delete pvs todo-app-data-storage
   print_success "PVCs deleted"
 
   print_info "Deleting Persistent Volumes..."
   kubectl delete pv todo-app-volume
   print_success "PV deleted"
 
-  print_info "Deleting Deployments..."
-  kubectl delete deployment todo-app-deployment
-  print_success "Deployments deleted"
+  print_info "Deleting Statefulsets..."
+  kubectl delete statefulset todo-app-stset
+  print_success "Statefulsets deleted"
 
   print_info "Deleting Namespace and ConfigMap..."
   kubectl delete namespaces project
@@ -90,5 +92,5 @@ else
 
   print_header "🎉 TODO APP UNDEPLOYMENT COMPLETE"
   print_success "All todo app resources have been cleaned up!"
-  print_info "Environment is now clean and ready for next deployment"
+  print_info "Environment is now clean and ready for next stset"
 fi
