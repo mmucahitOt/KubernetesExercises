@@ -11,4 +11,4 @@ spec:
     name: web
   clusterIP: None
   selector:
-    app: todo-stset
+    app: todo-app-stset

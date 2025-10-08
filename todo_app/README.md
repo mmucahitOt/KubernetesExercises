@@ -5,6 +5,7 @@ This folder contains:
 - Common Kubernetes manifests shared by the todo app stack (`manifests/`)
 - Helper scripts to build, deploy, and undeploy (`scripts/`)
 - Subprojects: `todo_app` (server), `todo_app_backend` (API), `todo_app_frontend` (React)
+- **NEW**: `todo_app_add_job` (CronJob that automatically adds Wikipedia articles as todos)
 
 ## 🎨 Enhanced Scripts with Beautiful Logging
 
@@ -23,6 +24,16 @@ All deployment and undeployment scripts now feature:
 - `ingress.yaml`: Ingress to expose services via the k3d load balancer
 - `config_map.yaml`: Configuration data for the application
 
+## 🕐 Automated Todo Generation (`todo_app_add_job/`)
+
+**NEW FEATURE**: Automatic Wikipedia article todos via CronJob!
+
+- **CronJob**: Runs every hour to add random Wikipedia articles as todos
+- **HTML Links**: Frontend renders Wikipedia links as clickable links with "Read this article. Link:" prefix
+- **Database Integration**: Direct PostgreSQL connection to insert todos
+- **Docker Image**: Lightweight Alpine-based image with psql and curl
+- **Manifest**: `todo_app_add_job/manifests/todo_app_add_job.yaml` (CronJob spec)
+
 ## Scripts (`scripts/`)
 
 ### 🚀 `kubernetes_deploy.sh <docker-registry>`
@@ -30,10 +41,10 @@ All deployment and undeployment scripts now feature:
 **Enhanced deployment script with beautiful logging:**
 
 - 🎨 **Frontend build** with Vite integration and progress tracking
-- 🐳 **Docker image building** with step-by-step feedback
+- 🐳 **Docker image building** with step-by-step feedback (includes new CronJob image)
 - 📤 **Image pushing** to Docker Hub with status updates
 - ☸️ **Kubernetes cluster** setup and management
-- 📋 **Manifest application** (applies StatefulSet + Services/Ingress) with clear progress indicators
+- 📋 **Manifest application** (applies StatefulSet + Services/Ingress + CronJob) with clear progress indicators
 - ⏳ **Deployment waiting** with real-time status updates
 - 🎉 **Completion confirmation** with final status
 
@@ -95,11 +106,26 @@ npm run undeploy <docker-registry>
 ✅ todo_app_backend image built
 ```
 
+## 🎯 Features
+
+### Frontend Enhancements
+
+- **HTML Link Rendering**: Wikipedia links from CronJob are rendered as clickable links
+- **Smart Content Detection**: Automatically detects HTML vs plain text todos
+- **User-Friendly Prefix**: HTML todos get "Read this article. Link:" prefix
+
+### Automated Content
+
+- **Hourly Wikipedia Articles**: CronJob adds random Wikipedia articles every hour
+- **Direct Database Integration**: CronJob connects directly to PostgreSQL
+- **HTML Link Generation**: Articles are stored as clickable HTML links
+
 ## 📝 Notes
 
 - Services are `ClusterIP` (in-cluster). Use `kubectl port-forward`/Ingress/k3d `--port` for host access.
 - The deploy script sets env needed by manifests (e.g., `TODO_APP_PORT`, `TODO_APP_BACKEND_PORT`, `VITE_TODO_*`).
 - The application is deployed as a **StatefulSet** to persist data and provide stable Pod identity.
+- **CronJob** runs every hour (`0 * * * *`) to add Wikipedia articles as todos.
 - All scripts now provide **real-time feedback** with **color-coded status** and **progress indicators**.
 - **Frontend build process** is fully integrated with Vite and includes dependency management.
 - **Error handling** is improved with clear error messages and troubleshooting guidance.

@@ -66,6 +66,10 @@ else
   kubectl delete service todo-app-backend-svc
   kubectl delete todo-stset-db-svc
   print_success "Services deleted"
+  
+  print_info "Deleting Ingresses..."
+  kubectl delete ingress todo-app-ingress
+  print_success "Ingresses deleted"
 
   print_info "Deleting Persistent Volume Claims..."
   kubectl delete pvc todo-app-claim
@@ -79,6 +83,10 @@ else
   print_info "Deleting Statefulsets..."
   kubectl delete statefulset todo-app-stset
   print_success "Statefulsets deleted"
+
+  print_info "Deleting Jobs "
+  kubectl delete job todo-app-add-cronjob
+  print_success "Jobs deleted"
 
   print_info "Deleting Namespace and ConfigMap..."
   kubectl delete namespaces project

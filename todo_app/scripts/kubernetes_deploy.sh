@@ -68,12 +68,14 @@ ROOT_DIR="$(cd -- "${TODO_APP_ROOT}/.." >/dev/null 2>&1 && pwd -P)"
 TODO_APP_DIR="${TODO_APP_ROOT}/todo_app"
 TODO_APP_BACKEND_DIR="${TODO_APP_ROOT}/todo_app_backend"
 TODO_APP_BACKEND_DB_DIR="${TODO_APP_ROOT}/todo_app_backend_db"
+TODO_APP_ADD_JOB_DIR="${TODO_APP_ROOT}/todo_app_add_job"
 FRONTEND_DIR="${TODO_APP_ROOT}/todo_app_frontend"
 FRONTEND_DIST_DIR="${FRONTEND_DIR}/dist"
 TODO_PUBLIC_DIR="${TODO_APP_DIR}/public"
 TODO_APP_ROOT_MANIFESTS_DIR="${TODO_APP_ROOT}/manifests"
 TODO_APP_MANIFESTS_DIR="${TODO_APP_DIR}/manifests"
 TODO_APP_BACKEND_MANIFESTS_DIR="${TODO_APP_BACKEND_DIR}/manifests"
+TODO_APP_ADD_JOB_MANIFESTS_DIR="${TODO_APP_ADD_JOB_DIR}/manifests"
 
 # Build frontend and move output to backend public
 print_header "🎨 BUILDING FRONTEND"
@@ -117,12 +119,17 @@ print_info "Building todo_app_backend_db image..."
 docker build -t todo_app_backend_db:latest "${TODO_APP_BACKEND_DB_DIR}"
 print_success "todo_app_backend image built"
 
+print_info "Building todo_app_add_job image..."
+docker build -t todo_app_add_job:latest "${TODO_APP_ADD_JOB_DIR}"
+print_success "todo_app_add_job image built"
+
 
 # Tag the images for Docker Hub
 print_header "🏷️  TAGGING IMAGES FOR DOCKER HUB"
 docker tag todo_app:latest $_DOCKER_REGISTRY/todo_app:latest
 docker tag todo_app_backend:latest $_DOCKER_REGISTRY/todo_app_backend:latest
 docker tag todo_app_backend_db:latest $_DOCKER_REGISTRY/todo_app_backend_db:latest
+docker tag todo_app_add_job:latest $_DOCKER_REGISTRY/todo_app_add_job:latest
 print_success "All images tagged for Docker Hub"
 
 # Push the Docker images to Docker Hub
@@ -137,7 +144,12 @@ print_success "todo_app_backend pushed"
 
 print_info "Pushing todo_app_backend_db image..."
 docker push $_DOCKER_REGISTRY/todo_app_backend_db:latest
-print_success "todo_app_backend pushed"
+print_success "todo_app_backend_db pushed"
+
+
+print_info "Pushing todo_app_add_job image..."
+docker push $_DOCKER_REGISTRY/todo_app_add_job:latest
+print_success "todo_app_add_job pushed"
 
 EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
 
@@ -171,13 +183,13 @@ print_info "Creating namespace..."
 kubectl create -f "${TODO_APP_ROOT_MANIFESTS_DIR}/namespace.yaml"
 print_success "Namespace created"
 
-print_info "Creating ConfigMap..."
-envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/config_map.yaml" | kubectl apply -f -
-print_success "ConfigMap created"
-
 print_info "Activating namespace..."
 kubens project
 print_success "Namespace activated"
+
+print_info "Creating ConfigMap..."
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/config_map.yaml" | kubectl apply -f -
+print_success "ConfigMap created"
 
 print_header "📋 APPLYING KUBERNETES MANIFESTS"
 print_info "Applying Stateful Set..."
@@ -195,12 +207,17 @@ print_success "Persistent Volume Claims applied"
 print_info "Applying Services..."
 envsubst < "${TODO_APP_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 envsubst < "${TODO_APP_BACKEND_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
-envsubst < "${TODO_APP_MANIFESTS_DIR}/headless_service.yaml" | kubectl apply -f -
+envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/headless_service.yaml" | kubectl apply -f -
 print_success "Services applied"
 
 print_info "Applying Ingress..."
 envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
 print_success "Ingress applied"
+
+
+print_info "Applying Add Todo Job..."
+envsubst < "${TODO_APP_ADD_JOB_MANIFESTS_DIR}/todo_app_add_job.yaml" | kubectl apply -f -
+print_success "Add Todo Job applied"
 
 print_header "⏳ WAITING FOR STATEFULSET"
 print_info "Waiting for todo-app-stset to be available..."
