@@ -191,6 +191,37 @@ print_info "Creating ConfigMap..."
 envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/config_map.yaml" | kubectl apply -f -
 print_success "ConfigMap created"
 
+print_header "📊 MONITORING SETUP"
+print_info "Setting up monitoring stack..."
+
+# Import and run the monitoring setup script
+if [ -f "${TODO_APP_ROOT}/scripts/monitoring/step1_grafana_prometheus.sh" ]; then
+  print_info "Running monitoring setup script..."
+  bash "${TODO_APP_ROOT}/scripts/monitoring/step1_grafana_prometheus.sh"
+  print_success "Monitoring stack setup complete"
+else
+  print_error "Monitoring setup script not found at ${TODO_APP_ROOT}/scripts/monitoring/step1_grafana_prometheus.sh"
+  print_warning "Skipping monitoring setup..."
+fi
+
+print_info "Setting up log collection (Step 2)..."
+if [ -f "${TODO_APP_ROOT}/scripts/monitoring/step2_grafana_alloy_loki.sh" ]; then
+  print_info "Running Step 2: Grafana Alloy + Loki..."
+  bash "${TODO_APP_ROOT}/scripts/monitoring/step2_grafana_alloy_loki.sh"
+  print_success "Log collection setup complete"
+  
+  # Configure Grafana data sources
+  print_info "Configuring Grafana data sources..."
+  if [ -f "${TODO_APP_ROOT}/scripts/monitoring/configure_grafana_datasources.sh" ]; then
+    bash "${TODO_APP_ROOT}/scripts/monitoring/configure_grafana_datasources.sh"
+    print_success "Grafana data sources configured"
+  else
+    print_warning "Grafana data source configuration script not found"
+  fi
+else
+  print_warning "Step 2 script not found, skipping log collection setup..."
+fi
+
 print_header "📋 APPLYING KUBERNETES MANIFESTS"
 print_info "Applying Stateful Set..."
 envsubst < "${TODO_APP_ROOT_MANIFESTS_DIR}/statefulset.yaml" | kubectl apply -f -
@@ -242,4 +273,37 @@ kubectl logs statefulset/todo-app-stset --all-containers --tail=200
 print_header "🎉 TODO APP STATEFULSET COMPLETE"
 print_success "Todo app statefulseted successfully!"
 print_info "Your todo application is now running in Kubernetes"
+
+print_header "🔧 HELPFUL COMMANDS"
+print_info "To access Grafana (monitoring dashboard):"
+print_info "  kubectl -n project port-forward \$(kubectl -n project get pods -l app.kubernetes.io/name=grafana,app.kubernetes.io/instance=prometheus-stack -o jsonpath='{.items[0].metadata.name}') 3000:3000"
+print_info "  Then visit: http://localhost:3000 (admin/admin123)"
+print_info ""
+print_info "To access Prometheus directly:"
+print_info "  kubectl -n project port-forward svc/prometheus-stack-kube-prom-prometheus 9090:9090"
+print_info "  Then visit: http://localhost:9090"
+print_info ""
+print_info "To check if port-forward is running:"
+print_info "  lsof -i :3000"
+print_info ""
+print_info "To kill existing port-forwards:"
+print_info "  pkill -f 'kubectl.*port-forward.*3000'"
+print_info ""
+print_info "To check Loki status:"
+print_info "  kubectl -n project get pods -l app.kubernetes.io/name=loki"
+print_info ""
+print_info "To check Grafana Alloy status:"
+print_info "  kubectl -n project get pods -l app.kubernetes.io/name=grafana-alloy"
+print_info ""
+print_info "To view Loki logs:"
+print_info "  kubectl -n project logs -l app.kubernetes.io/name=loki --tail=50"
+print_info ""
+print_info "To view Grafana Alloy logs:"
+print_info "  kubectl -n project logs -l app.kubernetes.io/name=grafana-alloy --tail=50"
+print_info ""
+print_info "Application Access:"
+print_info "  🌐 Frontend: http://localhost:8081"
+print_info "  🔧 Backend API: http://localhost:8081/todos"
+print_info "  📊 Grafana: http://localhost:3000 (after port-forward)"
+print_info "  📈 Prometheus: http://localhost:9090 (after port-forward)"
 

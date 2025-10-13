@@ -43,6 +43,9 @@ print_error() {
 # Get the registry name from the command line arguments
 DOCKER_REGISTRY=$1
 
+# Resolve script directory
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
+
 print_header "🧹 TODO APP UNDEPLOYMENT STARTING"
 print_info "Docker Registry: $DOCKER_REGISTRY"
 print_warning "This will remove all deployed todo app resources"
@@ -60,6 +63,15 @@ else
   print_success "Context switched to cluster"
 
   print_header "🗑️  DELETING TODO APP RESOURCES"
+  
+  # Clean up monitoring environment first
+  print_info "Cleaning up monitoring environment..."
+  if [ -f "${SCRIPT_DIR}/monitoring/remove_monitoring_env.sh" ]; then
+    bash "${SCRIPT_DIR}/monitoring/remove_monitoring_env.sh"
+    print_success "Monitoring environment cleaned up"
+  else
+    print_warning "Monitoring cleanup script not found, skipping..."
+  fi
   
   print_info "Deleting Services..."
   kubectl delete service todo-app-svc

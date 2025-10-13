@@ -11,9 +11,15 @@ Todo.init(
       autoIncrement: true,
     },
     text: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING(140),
       allowNull: false,
       defaultValue: "",
+      validate: {
+        len: {
+          args: [1, 140],
+          msg: "Todo text must be between 1 and 140 characters",
+        },
+      },
     },
   },
   {

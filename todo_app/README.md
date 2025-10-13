@@ -34,6 +34,18 @@ All deployment and undeployment scripts now feature:
 - **Docker Image**: Lightweight Alpine-based image with psql and curl
 - **Manifest**: `todo_app_add_job/manifests/todo_app_add_job.yaml` (CronJob spec)
 
+## 📊 Monitoring & Logging Stack
+
+**Complete observability solution** with Grafana, Loki, and Prometheus:
+
+- **Grafana**: Web-based monitoring and visualization platform for metrics and logs
+- **Loki**: Log aggregation system that collects and stores application logs
+- **Grafana Alloy**: Modern log collection agent that streams logs from Kubernetes pods to Loki
+- **Prometheus**: Metrics collection and monitoring system
+- **Structured Logging**: Todo app backend generates JSON logs with detailed request/response information
+- **Real-time Log Queries**: Use Grafana Explore to query logs with LogQL (e.g., `{job="loki.source.kubernetes.kubernetes_logs"} |= "Creating new todo"`)
+- **Monitoring Scripts**: Automated setup scripts in `scripts/monitoring/` for easy deployment
+
 ## Scripts (`scripts/`)
 
 ### 🚀 `kubernetes_deploy.sh <docker-registry>`
@@ -129,3 +141,5 @@ npm run undeploy <docker-registry>
 - All scripts now provide **real-time feedback** with **color-coded status** and **progress indicators**.
 - **Frontend build process** is fully integrated with Vite and includes dependency management.
 - **Error handling** is improved with clear error messages and troubleshooting guidance.
+- **Monitoring stack** can be deployed using scripts in `scripts/monitoring/` for complete observability.
+- **Log queries** in Grafana use LogQL syntax to filter and search application logs in real-time.
