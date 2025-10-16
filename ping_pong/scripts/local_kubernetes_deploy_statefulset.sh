@@ -62,17 +62,17 @@ PING_PONG_MANIFESTS_DIR="${PING_PONG_DIR}/manifests/statefulset"
 print_header "🐳 BUILDING DOCKER IMAGES"
 
 print_info "Building ping_pong image..."
-docker buildx build --platform linux/amd64 -t ping_pong:amd64-v1 "${PING_PONG_DIR}"
+docker build -t ping_pong:latest "${PING_PONG_DIR}"
 print_success "ping_pong image built"
 
 print_info "Building ping_pong_db image..."
-docker buildx build --platform linux/amd64 -t ping_pong_db:amd64-v1 "${PING_PONG_DIR}/database"
+docker build -t ping_pong_db:latest "${PING_PONG_DIR}/database"
 print_success "ping_pong_db image built"
 
 # Tag the images for Docker Hub
 print_header "🏷️  TAGGING IMAGES FOR DOCKER HUB"
-docker tag ping_pong:amd64-v1 $_DOCKER_REGISTRY/ping_pong:amd64-v1
-docker tag ping_pong_db:amd64-v1 $_DOCKER_REGISTRY/ping_pong_db:amd64-v1
+docker tag ping_pong:latest $_DOCKER_REGISTRY/ping_pong:latest
+docker tag ping_pong_db:latest $_DOCKER_REGISTRY/ping_pong_db:latest
 print_success "All images tagged for Docker Hub"
 
 
@@ -80,15 +80,38 @@ print_success "All images tagged for Docker Hub"
 print_header "📤 PUSHING IMAGES TO DOCKER HUB"
 
 print_info "Pushing ping_pong image..."
-docker push $_DOCKER_REGISTRY/ping_pong:amd64-v1
+docker push $_DOCKER_REGISTRY/ping_pong:latest
 print_success "ping_pong pushed"
 
 print_info "Pushing ping_pong_db image..."
-docker push $_DOCKER_REGISTRY/ping_pong_db:amd64-v1
+docker push $_DOCKER_REGISTRY/ping_pong_db:latest
 print_success "ping_pong_db pushed"
+EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
+
+print_header "☸️  KUBERNETES CLUSTER SETUP"
+if [ -z "$EXISTING_CONTEXT" ]; then
+  print_info "No existing cluster found, creating new one..."
+  k3d cluster create -p 8081:80@loadbalancer --agents 2
+  kubectl config use-context k3d-k3s-default
+  print_success "Cluster created and context switched"
+else
+  print_info "Existing cluster found"
+  kubectl config use-context k3d-k3s-default
+  print_success "Context switched to existing cluster"
+fi
 
 print_info "Cluster information:"
 kubectl cluster-info
+
+print_info "Starting cluster..."
+k3d cluster start
+print_success "Cluster started successfully"
+
+# Create the directory for persistent storage
+print_header "💾 SETTING UP PERSISTENT STORAGE"
+print_info "Creating storage directory on node..."
+docker exec k3d-k3s-default-agent-0 mkdir -p /tmp/kube
+print_success "Storage directory created"
 
 # Export variables for substitution in manifest
 print_header "🔧 CONFIGURING ENVIRONMENT VARIABLES"
@@ -105,24 +128,8 @@ print_info "Creating namespace..."
 kubectl create -f "${PING_PONG_MANIFESTS_DIR}/namespace.yaml"
 print_success "Namespace created"
 
-# Block until the namespace actually exists (fail fast if it doesn't)
-print_info "Waiting for namespace ping-pong to exist..."
-NS_WAIT_TIMEOUT=60
-for i in $(seq 1 $NS_WAIT_TIMEOUT); do
-  if kubectl get namespace ping-pong >/dev/null 2>&1; then
-    print_success "Namespace ping-pong is ready"
-    break
-  fi
-  sleep 2
-done
-if ! kubectl get namespace ping-pong >/dev/null 2>&1; then
-  print_error "Namespace ping-pong was not created within timeout. Please fix and retry."
-  exit 1
-fi
-
-
 print_info "Activating namespace..."
-kubens ping-pong
+kubens ping_pong
 print_success "Namespace activated"
 
 # Apply the Kubernetes manifest with substituted variables

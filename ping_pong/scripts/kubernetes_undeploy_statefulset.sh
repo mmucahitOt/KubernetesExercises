@@ -47,45 +47,36 @@ print_header "🧹 KUBERNETES UNDEPLOYMENT STARTING"
 print_info "Docker Registry: $DOCKER_REGISTRY"
 print_warning "This will remove all deployed resources"
 
+print_header "🗑️DELETING KUBERNETES RESOURCES"
 
-EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
+print_info "Deleting Services..."
+kubectl delete service ping-pong-stset-svc
+kubectl delete service ping-pong-stset-db-svc
+print_success "Services deleted"
 
-print_header "☸️  CLUSTER CHECK"
-if [ -z "$EXISTING_CONTEXT" ]; then
-  print_warning "No existing cluster found"
-  print_info "Nothing to undeploy"
-else
-  print_info "Existing cluster found"
-  kubectl config use-context k3d-k3s-default
-  print_success "Context switched to cluster"
-
-  print_header "🗑️  DELETING KUBERNETES RESOURCES"
-  
-  print_info "Deleting Services..."
-  kubectl delete service ping-pong-stset-svc
-  kubectl delete service ping-pong-stset-db-svc
-  print_success "Services deleted"
-
-  print_info "Deleting Ingress..."
-  kubectl delete ingress ping-pong-stset-ingress
-  print_success "Services deleted"
+print_info "Deleting Ingress..."
+kubectl delete ingress ping-pong-stset-ingress
+print_success "Services deleted"
 
 
-  print_info "Deleting Persistent Volume Claims..."
-  kubectl delete pvc ping-pong-data-storage-ping-pong-stset-0
-  print_success "PVCs deleted"
+print_info "Deleting Persistent Volume Claims..."
+kubectl delete pvc ping-pong-data-storage-ping-pong-stset-0
+print_success "PVCs deleted"
 
-  print_info "Deleting Statefulset..."
-  kubectl delete statefulset ping-pong-stset
-  print_success "Statefulset deleted"
+print_info "Deleting Statefulset..."
+kubectl delete statefulset ping-pong-stset
+print_success "Statefulset deleted"
 
-  print_header "🐳 CLEANING UP DOCKER IMAGES"
-  print_info "Removing Docker images..."
-  docker rmi $DOCKER_REGISTRY/ping_pong:latest
-  docker rmi $DOCKER_REGISTRY/ping_pong_db:latest
-  print_success "Docker images removed"
+print_info "Deleting Namespace"
+kubectl delete namespaces ping_pong
+print_success "Namespace deleted"
 
-  print_header "🎉 UNDEPLOYMENT COMPLETE"
-  print_success "All resources have been cleaned up!"
-  print_info "Environment is now clean and ready for next deployment"
-fi
+print_header "🐳 CLEANING UP DOCKER IMAGES"
+print_info "Removing Docker images..."
+docker rmi $DOCKER_REGISTRY/ping_pong:latest
+docker rmi $DOCKER_REGISTRY/ping_pong_db:latest
+print_success "Docker images removed"
+
+print_header "🎉 UNDEPLOYMENT COMPLETE"
+print_success "All resources have been cleaned up!"
+print_info "Environment is now clean and ready for next deployment"
