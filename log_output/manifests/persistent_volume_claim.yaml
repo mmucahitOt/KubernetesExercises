@@ -4,9 +4,9 @@ metadata:
   name: shared-claim
   namespace: exercises
 spec:
-  storageClassName: my-persistent-volume-pv
+  storageClassName: standard-rwo
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi

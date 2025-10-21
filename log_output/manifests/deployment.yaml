@@ -24,7 +24,8 @@ spec:
             claimName: shared-claim
       containers:
         - name: log-output-container
-          image: ${DOCKER_REGISTRY}/log_output:latest
+          image: ${DOCKER_REGISTRY}/log_output:amd64-v1
+          imagePullPolicy: Always
           volumeMounts:
           - name: log-output-config-vol  
             mountPath: "/config"
@@ -49,13 +50,14 @@ spec:
               containerPort: ${LOG_OUTPUT_PORT}
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              memory: "64Mi"
+              cpu: "50m"
             limits:
-              memory: "256Mi"
-              cpu: "200m"  
+              memory: "128Mi"
+              cpu: "100m"  
         - name: read-output-container
-          image: ${DOCKER_REGISTRY}/read_output:latest
+          image: ${DOCKER_REGISTRY}/read_output:amd64-v1
+          imagePullPolicy: Always
           volumeMounts:
           - name: shared-log-file
             mountPath: /usr/src/app/files
@@ -69,8 +71,8 @@ spec:
               containerPort: ${READ_OUTPUT_PORT}
           resources:
             requests:
-              memory: "128Mi" 
-              cpu: "100m"
+              memory: "64Mi"
+              cpu: "50m"
             limits:
-              memory: "256Mi"
-              cpu: "200m"  
+              memory: "128Mi"
+              cpu: "100m"  

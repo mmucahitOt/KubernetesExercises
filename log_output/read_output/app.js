@@ -6,6 +6,11 @@ const port = config.port || 3001;
 const app = express();
 const fileManager = new FileManager();
 
+
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.get("/readoutput", (req, res) => {
   fileManager.readFile(config.logFilePath, (error, data) => {
     console.log(error);

@@ -47,55 +47,44 @@ print_header "🧹 KUBERNETES UNDEPLOYMENT STARTING"
 print_info "Docker Registry: $DOCKER_REGISTRY"
 print_warning "This will remove all deployed resources"
 
+print_header "🗑️DELETING KUBERNETES RESOURCES"
 
-EXISTING_CONTEXT=$(kubectl config get-contexts | grep "k3d-k3s-default")
+print_info "Deleting Services..."
+kubectl delete service log-output-deployment-svc
+kubectl delete service ping-pong-deployment-svc
+kubectl delete service ping-pong-stset-svc
+kubectl delete service ping-pong-stset-db-svc
+print_success "Services deleted"
 
-print_header "☸️  CLUSTER CHECK"
-if [ -z "$EXISTING_CONTEXT" ]; then
-  print_warning "No existing cluster found"
-  print_info "Nothing to undeploy"
-else
-  print_info "Existing cluster found"
-  kubectl config use-context k3d-k3s-default
-  print_success "Context switched to cluster"
+print_info "Deleting Persistent Volume Claims..."
+kubectl delete pvc shared-claim
+print_success "PVCs deleted"
 
-  print_header "🗑️  DELETING KUBERNETES RESOURCES"
-  
-  print_info "Deleting Services..."
-  kubectl delete service log-output-deployment-svc
-  kubectl delete service ping-pong-deployment-svc
-  print_success "Services deleted"
+print_info "Deleting Persistent Volumes..."
+kubectl delete pv persistent-volume-pv
+print_success "PV deleted"
 
-  print_info "Deleting Persistent Volume Claims..."
-  kubectl delete pvc shared-claim
-  print_success "PVCs deleted"
+print_info "Deleting Deployments..."
+kubectl delete deployment log-output-deployment
+kubectl delete statefulset ping-pong-stset
+print_success "Deployments deleted"
 
-  print_info "Deleting Persistent Volumes..."
-  kubectl delete pv persistent-volume-pv
-  print_success "PV deleted"
+print_info "Switching to default namespace..."
+kubens default
+print_success "Namespace set to default"
 
-  print_info "Deleting Deployments..."
-  kubectl delete deployment log-output-deployment
-  kubectl delete deployment ping-pong-deployment
-  print_success "Deployments deleted"
+print_info "Deleting Namespace and ConfigMap..."
+kubectl delete namespaces exercises
+kubectl delete configmap log-output-configmap
+print_success "Namespace and ConfigMap deleted"
 
-  print_info "Deleting Namespace and ConfigMap..."
-  kubectl delete namespaces exercises
-  kubectl delete configmap log-output-configmap
-  print_success "Namespace and ConfigMap deleted"
+print_header "🎉 UNDEPLOYMENT COMPLETE"
+print_success "All resources have been cleaned up!"
+print_info "Environment is now clean and ready for next deployment"
 
-  print_header "🐳 CLEANING UP DOCKER IMAGES"
-  print_info "Removing Docker images..."
-  docker rmi $DOCKER_REGISTRY/log_output:latest
-  docker rmi $DOCKER_REGISTRY/read_output:latest
-  docker rmi $DOCKER_REGISTRY/ping_pong:latest
-  print_success "Docker images removed"
-
-  print_info "Switching to default namespace..."
-  kubens default
-  print_success "Namespace set to default"
-
-  print_header "🎉 UNDEPLOYMENT COMPLETE"
-  print_success "All resources have been cleaned up!"
-  print_info "Environment is now clean and ready for next deployment"
-fi
+print_header "🐳 CLEANING UP DOCKER IMAGES"
+print_info "Removing Docker images..."
+docker rmi $DOCKER_REGISTRY/log_output:latest
+docker rmi $DOCKER_REGISTRY/read_output:latest
+docker rmi $DOCKER_REGISTRY/ping_pong:latest
+print_success "Docker images removed"

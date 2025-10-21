@@ -30,3 +30,4 @@
 - [2.10
   ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [3.1](https://github.com/mmucahitOt/KubernetesExercises/tree/main/ping_pong)
+- [3.2](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
