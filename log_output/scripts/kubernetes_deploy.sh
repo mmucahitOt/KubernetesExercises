@@ -118,7 +118,7 @@ export PING_PONG_PORT=4001
 export READ_OUTPUT_PORT=4002
 export LOG_FILE_PATH="/usr/src/app/files/log.txt"
 export REQUEST_COUNT_FILE_PATH="/usr/src/app/shared_files/count.txt"
-export PING_PONG_URL="http://ping-pong-node-port-svc:2346"
+export PING_PONG_URL="http://ping-pong-stset-svc:2346"
 export PING_PONG_DB_URL="postgres://pingpong_user:pingpong_password@localhost:5432/pingpong_db"
 print_success "Environment variables configured"
 
@@ -163,15 +163,21 @@ envsubst < "${PING_PONG_MANIFESTS_DIR}/statefulset.yaml" | kubectl apply -f -
 print_success "Deployments applied"
 
 print_info "Applying Services..."
-envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/node_port_service.yaml" | kubectl apply -f -
-envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/node_port_service.yaml" | kubectl apply -f -
+envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
+envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/headless_service.yaml" | kubectl apply -f -
-envsubst < "${PING_PONG_MANIFESTS_DIR}/node_port_service.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/cluster_ip_service.yaml" | kubectl apply -f -
 print_success "Services applied"
 
-print_info "Applying Ingress..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/ingress.yaml" | kubectl apply -f -
-print_success "Ingress applied"
+print_info "Applying Gateway..."
+envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/gateway.yaml" | kubectl apply -f -
+print_success "Gateway applied"
+
+print_info "Applying HTTP Routes..."
+envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
+envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
+print_success "HTTP Routes applied"
 
 print_header "⏳ WAITING FOR DEPLOYMENTS"
 print_info "Waiting for log-output-deployment to be available..."
