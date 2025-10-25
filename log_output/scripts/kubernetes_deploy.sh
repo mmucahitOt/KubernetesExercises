@@ -179,6 +179,10 @@ envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
 print_success "HTTP Routes applied"
 
+print_info "Applying Gateway Rewrite Routes..."
+envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/gateway_rewrite_routes.yaml" | kubectl apply -f -
+print_success "Gateway Rewrite Routes applied"
+
 print_header "⏳ WAITING FOR DEPLOYMENTS"
 print_info "Waiting for log-output-deployment to be available..."
 kubectl rollout status deployment/log-output-deployment --timeout=100s
