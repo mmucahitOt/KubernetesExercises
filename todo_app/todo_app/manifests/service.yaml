@@ -10,4 +10,4 @@ spec:
   ports:
     - port: 2345
       protocol: TCP
-      targetPort: ${TODO_APP_PORT}
+      targetPort: 4000

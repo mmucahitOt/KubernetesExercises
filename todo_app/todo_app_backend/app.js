@@ -15,6 +15,10 @@ app.use(express.json());
 app.use(requestLogger);
 
 // Routes
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.use("/todos", todoRouter);
 
 initDb()

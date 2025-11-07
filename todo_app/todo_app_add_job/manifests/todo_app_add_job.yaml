@@ -13,7 +13,7 @@ spec:
         spec:
           containers:
           - name: todo-app-add-cronjob
-            image: ${DOCKER_REGISTRY}/todo_app_add_job:latest
+            image: TODO_APP_ADD_JOB_IMAGE/TAG
             env:
               - name: TODO_APP_BACKEND_DB_URL
                 value: "postgres://todo_user:todo_password@todo-stset-db-svc:5432/todo_db"

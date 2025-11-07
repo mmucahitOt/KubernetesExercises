@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: project
+commonLabels:
+  app.k8s.io/part-of: todo-app
+
+images:
+  - name: TODO_APP_IMAGE/TAG
+    newName: mmucahit0/todo_app:amd64-v1
+  - name: TODO_APP_BACKEND_IMAGE/TAG
+    newName: mmucahit0/todo_app_backend:amd64-v1
+  - name: TODO_APP_BACKEND_DB_IMAGE/TAG
+    newName: mmucahit0/todo_app_backend_db:amd64-v1
+  - name: TODO_APP_ADD_JOB_IMAGE/TAG
+    newName: mmucahit0/todo_app_add_job:amd64-v1
+
+configMapGenerator:
+  - name: todo-app-configmap
+    literals:
+      - TODO_APP_PORT=4000
+      - TODO_APP_BACKEND_PORT=4001
+      - RANDOM_IMAGE_PATH=/app/files/image.jpeg
+      - TODO_APP_BACKEND_DB_URL=postgres://todo_user:todo_password@localhost:5432/todo_db
+    options:
+      disableNameSuffixHash: true
+
+resources:
+  - manifests/namespace.yaml
+  - manifests/statefulset.yaml
+  
+  - manifests/headless_service.yaml
+  - manifests/ingress.yaml
+  - todo_app/manifests/service.yaml
+  - todo_app_backend/manifests/service.yaml
+  
+  - manifests/persistent_volume.yaml
+  - manifests/persistent_volume_claim.yaml
+  - todo_app_add_job/manifests/todo_app_add_job.yaml
+
+  - manifests/monitoring/loki-configmap.yaml
+  - manifests/monitoring/loki-service.yaml
+  - manifests/monitoring/loki-deployment.yaml

@@ -4,7 +4,7 @@ metadata:
   name: todo-app-configmap
   namespace: project
 data:
-  TODO_APP_PORT: "${TODO_APP_PORT}"
-  TODO_APP_BACKEND_PORT: "${TODO_APP_BACKEND_PORT}"
-  RANDOM_IMAGE_PATH: "${RANDOM_IMAGE_PATH}"
-  TODO_APP_BACKEND_DB_URL: "${TODO_APP_BACKEND_DB_URL}"
+  TODO_APP_PORT: "4000"
+  TODO_APP_BACKEND_PORT: "4001"
+  RANDOM_IMAGE_PATH: "/app/files/image.jpeg"
+  TODO_APP_BACKEND_DB_URL: "postgres://todo_user:todo_password@localhost:5432/todo_db"

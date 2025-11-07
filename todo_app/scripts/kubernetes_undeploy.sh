@@ -40,9 +40,6 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
-# Get the registry name from the command line arguments
-DOCKER_REGISTRY=$1
-
 # Resolve script directory
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
 
@@ -62,55 +59,17 @@ else
   kubectl config use-context k3d-k3s-default
   print_success "Context switched to cluster"
 
-  print_header "🗑️  DELETING TODO APP RESOURCES"
-  
-  # Clean up monitoring environment first
-  print_info "Cleaning up monitoring environment..."
-  if [ -f "${SCRIPT_DIR}/monitoring/remove_monitoring_env.sh" ]; then
-    bash "${SCRIPT_DIR}/monitoring/remove_monitoring_env.sh"
-    print_success "Monitoring environment cleaned up"
-  else
-    print_warning "Monitoring cleanup script not found, skipping..."
-  fi
-  
-  print_info "Deleting Services..."
-  kubectl delete service todo-app-svc
-  kubectl delete service todo-app-backend-svc
-  kubectl delete todo-stset-db-svc
-  print_success "Services deleted"
-  
-  print_info "Deleting Ingresses..."
-  kubectl delete ingress todo-app-ingress
-  print_success "Ingresses deleted"
+  print_header "🗑️  DELETING NAMESPACE"
+  print_info "Deleting namespace 'project' (this removes all namespaced resources)..."
+  kubectl delete namespace project --ignore-not-found=true --wait=true
+  print_success "Namespace deletion requested"
 
-  print_info "Deleting Persistent Volume Claims..."
-  kubectl delete pvc todo-app-claim
-  kubectl delete pvs todo-app-data-storage
-  print_success "PVCs deleted"
-
-  print_info "Deleting Persistent Volumes..."
-  kubectl delete pv todo-app-volume
-  print_success "PV deleted"
-
-  print_info "Deleting Statefulsets..."
-  kubectl delete statefulset todo-app-stset
-  print_success "Statefulsets deleted"
-
-  print_info "Deleting Jobs "
-  kubectl delete job todo-app-add-cronjob
-  print_success "Jobs deleted"
-
-  print_info "Deleting Namespace and ConfigMap..."
-  kubectl delete namespaces project
-  kubectl delete configmap todo-app-configmap
-  print_success "Namespace and ConfigMap deleted"
-
-  print_header "🐳 CLEANING UP DOCKER IMAGES"
-  print_info "Removing Docker images..."
-  docker rmi $DOCKER_REGISTRY/todo_output:latest
-  print_success "Docker images removed"
+  # Optional: delete cluster-scoped PV created for this app (not removed with namespace)
+  print_info "Deleting cluster-scoped PersistentVolume if present..."
+  kubectl delete pv todo-app-volume --ignore-not-found=true
+  print_success "PV cleanup complete"
 
   print_header "🎉 TODO APP UNDEPLOYMENT COMPLETE"
   print_success "All todo app resources have been cleaned up!"
-  print_info "Environment is now clean and ready for next stset"
+  print_info "Environment is now clean and ready for next deploy"
 fi

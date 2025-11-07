@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "deploy": "bash scripts/kubernetes_deploy.sh",
+    "deploy": "bash scripts/kubernetes_deploy_with_kustomize.sh",
     "undeploy": "bash scripts/kubernetes_undeploy.sh",
     "sentRequestToPod": "bash scripts/send_request_to_pod.sh"
   },

@@ -10,4 +10,4 @@ spec:
   ports:
     - port: 2346
       protocol: TCP
-      targetPort: ${TODO_APP_BACKEND_PORT}
+      targetPort: 4001

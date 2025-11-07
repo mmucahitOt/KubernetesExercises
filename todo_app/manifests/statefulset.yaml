@@ -20,7 +20,7 @@ spec:
             name: todo-app-configmap
       containers:
         - name: todo-app-container
-          image: ${DOCKER_REGISTRY}/todo_app:latest
+          image: TODO_APP_IMAGE/TAG
           volumeMounts:
             - name: todo-app-config-vol 
               mountPath: "/config"
@@ -35,8 +35,15 @@ spec:
                 configMapKeyRef:
                   name: todo-app-configmap
                   key: RANDOM_IMAGE_PATH 
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "25m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"           
         - name: todo-app-backend-container
-          image: ${DOCKER_REGISTRY}/todo_app_backend:latest
+          image: TODO_APP_BACKEND_IMAGE/TAG
           volumeMounts:
             - name: todo-app-config-vol 
               mountPath: "/config"
@@ -53,25 +60,36 @@ spec:
                   key: TODO_APP_BACKEND_DB_URL 
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              memory: "64Mi"
+              cpu: "50m"
             limits:
-              memory: "256Mi"
-              cpu: "200m"           
+              memory: "128Mi"
+              cpu: "100m"           
         - name: todo-app-backend-db
-          image: ${DOCKER_REGISTRY}/todo_app_backend_db:latest
+          image: TODO_APP_BACKEND_DB_IMAGE/TAG
           ports:
             - name: web
               containerPort: 5432
           volumeMounts:
             - name: todo-app-data-storage
-              mountPath: /var/lib/postgresql/data 
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+          env:
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
   volumeClaimTemplates:
     - metadata:
         name: todo-app-data-storage
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: local-path
+        storageClassName: standard-rwo  # GKE default storage class (use "local-path" for k3d)
         resources:
           requests:
             storage: 100Mi
