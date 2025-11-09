@@ -14,10 +14,6 @@ spec:
       labels:
         app: todo-app-stset
     spec:
-      volumes:
-        - name: todo-app-config-vol
-          configMap:
-            name: todo-app-configmap
       containers:
         - name: todo-app-container
           image: TODO_APP_IMAGE/TAG
@@ -84,6 +80,10 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "100m"
+      volumes:
+        - name: todo-app-config-vol
+          configMap:
+            name: todo-app-configmap
   volumeClaimTemplates:
     - metadata:
         name: todo-app-data-storage
