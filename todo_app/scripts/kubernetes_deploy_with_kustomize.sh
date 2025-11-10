@@ -77,6 +77,7 @@ IMAGE_TODO_APP="todo_app:amd64-v1"
 IMAGE_TODO_BACKEND="todo_app_backend:amd64-v1"
 IMAGE_TODO_BACKEND_DB="todo_app_backend_db:amd64-v1"
 IMAGE_TODO_ADD_JOB="todo_app_add_job:amd64-v1"
+IMAGE_TODO_BACKUP_JOB="todo_app_backup_job:amd64-v1" 
 
 # ============================================================================
 # DIRECTORY RESOLUTION
@@ -87,6 +88,7 @@ TODO_APP_DIR="${TODO_APP_ROOT}/todo_app"
 TODO_APP_BACKEND_DIR="${TODO_APP_ROOT}/todo_app_backend"
 TODO_APP_BACKEND_DB_DIR="${TODO_APP_ROOT}/todo_app_backend_db"
 TODO_APP_ADD_JOB_DIR="${TODO_APP_ROOT}/todo_app_add_job"
+TODO_APP_BACKUP_JOB_DIR="${TODO_APP_ROOT}/todo_app_db_backup_cronjob"
 FRONTEND_DIR="${TODO_APP_ROOT}/todo_app_frontend"
 FRONTEND_DIST_DIR="${FRONTEND_DIR}/dist"
 TODO_PUBLIC_DIR="${TODO_APP_DIR}/public"
@@ -195,7 +197,7 @@ build_and_push_image "${IMAGE_TODO_APP}" "${TODO_APP_DIR}" || exit 1
 build_and_push_image "${IMAGE_TODO_BACKEND}" "${TODO_APP_BACKEND_DIR}" || exit 1
 build_and_push_image "${IMAGE_TODO_BACKEND_DB}" "${TODO_APP_BACKEND_DB_DIR}" || exit 1
 build_and_push_image "${IMAGE_TODO_ADD_JOB}" "${TODO_APP_ADD_JOB_DIR}" || exit 1
-
+build_and_push_image "${IMAGE_TODO_BACKUP_JOB}" "${TODO_APP_BACKUP_JOB_DIR}" || exit 1
 # ----------------------------------------------------------------------------
 # KUBERNETES CLUSTER SETUP
 # ----------------------------------------------------------------------------
@@ -276,6 +278,7 @@ if command -v kustomize >/dev/null 2>&1; then
     kustomize edit set image "TODO_APP_BACKEND_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_backend:amd64-v1"
     kustomize edit set image "TODO_APP_BACKEND_DB_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_backend_db:amd64-v1"
     kustomize edit set image "TODO_APP_ADD_JOB_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_add_job:amd64-v1"
+    kustomize edit set image "TODO_APP_BACKUP_JOB_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_backup_job:amd64-v1"
     popd >/dev/null || exit 1
     print_success "Kustomize images updated"
 else

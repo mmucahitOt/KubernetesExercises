@@ -14,6 +14,8 @@ images:
     newName: mmucahit0/todo_app_backend_db:amd64-v1
   - name: TODO_APP_ADD_JOB_IMAGE/TAG
     newName: mmucahit0/todo_app_add_job:amd64-v1
+  - name: TODO_APP_BACKUP_JOB_IMAGE/TAG
+    newName: mmucahit0/todo_app_backup_job:amd64-v2 
 
 configMapGenerator:
   - name: todo-app-configmap
@@ -21,12 +23,14 @@ configMapGenerator:
       - TODO_APP_PORT=4000
       - TODO_APP_BACKEND_PORT=4001
       - RANDOM_IMAGE_PATH=/app/files/image.jpeg
-      - TODO_APP_BACKEND_DB_URL=postgres://todo_user:todo_password@localhost:5432/todo_db
+      - TODO_APP_BACKEND_DB_URL=postgres://todo_user:todo_password@todo-stset-db-svc:5432/todo_db
     options:
       disableNameSuffixHash: true
 
 resources:
   - manifests/namespace.yaml
+  - manifests/backup-serviceaccount.yaml
+  - manifests/deployment.yaml
   - manifests/statefulset.yaml
   
   - manifests/headless_service.yaml
@@ -37,6 +41,7 @@ resources:
   - manifests/persistent_volume.yaml
   - manifests/persistent_volume_claim.yaml
   - todo_app_add_job/manifests/todo_app_add_job.yaml
+  - todo_app_db_backup_cronjob/manifests/todo_app_db_backup_cronjob.yaml 
 
   - manifests/monitoring/loki-configmap.yaml
   - manifests/monitoring/loki-service.yaml

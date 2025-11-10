@@ -6,7 +6,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: todo-app-stset 
+    app: todo-app 
   ports:
     - port: 2345
       protocol: TCP

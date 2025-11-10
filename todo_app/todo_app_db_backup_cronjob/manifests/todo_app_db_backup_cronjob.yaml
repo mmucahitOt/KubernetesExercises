@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: todo-app-backup-cronjob
+  namespace: project
+spec:
+  schedule: "* * * * *"  # Run every minute (for testing - change back to "0 0 * * *" for daily at midnight)
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: todo-app-backup-cronjob
+            image: TODO_APP_BACKUP_JOB_IMAGE/TAG
+            imagePullPolicy: Always
+            env:
+              - name: TODO_APP_BACKEND_DB_URL
+                value: "postgres://todo_user:todo_password@todo-stset-db-svc:5432/todo_db"
+              - name: GCS_BUCKET
+                value: "todo-app-db-backup-bucket"  # Your existing GCS bucket
+              - name: GOOGLE_APPLICATION_CREDENTIALS
+                value: /var/secrets/google/service-account.json
+            volumeMounts:
+              - name: gcp-key
+                mountPath: /var/secrets/google
+                readOnly: true
+          # Service account for GCS authentication
+          # Using Service Account Key method (secret mounted as volume)
+          volumes:
+            - name: gcp-key
+              secret:
+                secretName: backup-sa-key
+          restartPolicy: OnFailure
