@@ -54,9 +54,20 @@ print_error() {
 # Docker registry from command line argument
 DOCKER_REGISTRY="${1:-}"
 if [ -z "${DOCKER_REGISTRY}" ]; then
-    print_error "Usage: $0 <docker-registry>"
-    print_info "Example: $0 mmucahit0"
+    print_error "Usage: $0 <docker-registry> [build_images=true|false]"
+    print_info "Example: $0 mmucahit0 true"
     exit 1
+fi
+
+# Optional arg to control Docker image build & push (default: true)
+BUILD_IMAGES_RAW="${2:-true}"
+# Normalize to lowercase
+BUILD_IMAGES="$(printf '%s' "${BUILD_IMAGES_RAW}" | tr '[:upper:]' '[:lower:]')"
+# Interpret common falsy values
+if [[ "${BUILD_IMAGES}" == "0" || "${BUILD_IMAGES}" == "false" || "${BUILD_IMAGES}" == "no" || "${BUILD_IMAGES}" == "skip" ]]; then
+    BUILD_IMAGES="false"
+else
+    BUILD_IMAGES="true"
 fi
 
 # Application configuration (used by Kustomize configMapGenerator)
@@ -144,6 +155,7 @@ import_images_to_k3d() {
 print_header "🚀 TODO APP DEPLOYMENT"
 print_info "Docker Registry: ${DOCKER_REGISTRY}"
 print_info "Monitoring Scripts: ${MONITORING_SCRIPTS}"
+print_info "Build & Push Docker Images: ${BUILD_IMAGES}"
 
 # ----------------------------------------------------------------------------
 # FRONTEND BUILD
@@ -152,15 +164,13 @@ print_header "🎨 BUILDING FRONTEND"
 if [ -d "${FRONTEND_DIR}" ]; then
     pushd "${FRONTEND_DIR}" >/dev/null || exit 1
     
-    print_info "Setting environment variables for frontend..."
-    # Frontend is served via ingress at localhost:300
-    # Backend API is at /todos path on the same domain
-    # Note: backendApiUrl will have /todos appended in the service, so use base URL
-    export VITE_TODO_API_URL="http://localhost:8081"
-    export VITE_TODO_BACKEND_API_URL="http://localhost:8081"
-    print_success "Environment variables set"
-    print_info "  VITE_TODO_API_URL=${VITE_TODO_API_URL}"
-    print_info "  VITE_TODO_BACKEND_API_URL=${VITE_TODO_BACKEND_API_URL}"
+    print_info "Building frontend with relative paths..."
+    # Frontend uses relative paths that work with Ingress routing:
+    #   / -> frontend service (todo-app-svc)
+    #   /todos -> backend service (todo-app-backend-svc)
+    # No need to set VITE_TODO_API_URL or VITE_TODO_BACKEND_API_URL
+    # The frontend will use relative paths that work regardless of Ingress IP
+    print_success "Frontend will use relative paths for API calls"
     
     if command -v npm >/dev/null 2>&1; then
         print_info "Installing dependencies..."
@@ -190,14 +200,18 @@ fi
 # ----------------------------------------------------------------------------
 # DOCKER BUILD & PUSH
 # ----------------------------------------------------------------------------
-print_header "🐳 BUILDING & PUSHING DOCKER IMAGES"
-
-# Build and push each image explicitly (portable across shells)
-build_and_push_image "${IMAGE_TODO_APP}" "${TODO_APP_DIR}" || exit 1
-build_and_push_image "${IMAGE_TODO_BACKEND}" "${TODO_APP_BACKEND_DIR}" || exit 1
-build_and_push_image "${IMAGE_TODO_BACKEND_DB}" "${TODO_APP_BACKEND_DB_DIR}" || exit 1
-build_and_push_image "${IMAGE_TODO_ADD_JOB}" "${TODO_APP_ADD_JOB_DIR}" || exit 1
-build_and_push_image "${IMAGE_TODO_BACKUP_JOB}" "${TODO_APP_BACKUP_JOB_DIR}" || exit 1
+if [[ "${BUILD_IMAGES}" == "true" ]]; then
+    print_header "🐳 BUILDING & PUSHING DOCKER IMAGES"
+    # Build and push each image explicitly (portable across shells)
+    build_and_push_image "${IMAGE_TODO_APP}" "${TODO_APP_DIR}" || exit 1
+    build_and_push_image "${IMAGE_TODO_BACKEND}" "${TODO_APP_BACKEND_DIR}" || exit 1
+    build_and_push_image "${IMAGE_TODO_BACKEND_DB}" "${TODO_APP_BACKEND_DB_DIR}" || exit 1
+    build_and_push_image "${IMAGE_TODO_ADD_JOB}" "${TODO_APP_ADD_JOB_DIR}" || exit 1
+    build_and_push_image "${IMAGE_TODO_BACKUP_JOB}" "${TODO_APP_BACKUP_JOB_DIR}" || exit 1
+else
+    print_header "🐳 SKIPPING DOCKER BUILD & PUSH (per flag)"
+    print_info "Using existing images in registry: ${DOCKER_REGISTRY}"
+fi
 # ----------------------------------------------------------------------------
 # KUBERNETES CLUSTER SETUP
 # ----------------------------------------------------------------------------
@@ -299,6 +313,12 @@ print_success "Kustomize apply complete"
 
 # Force pod restart to use new images
 print_info "Restarting pods to use new images..."
+kubectl rollout restart deployment/todo-app-frontend-deployment --namespace="${NAMESPACE}" || {
+    print_warning "Failed to restart Frontend Deployment (may not exist yet)"
+}
+kubectl rollout restart deployment/todo-app-backend-deployment --namespace="${NAMESPACE}" || {
+    print_warning "Failed to restart Backend Deployment (may not exist yet)"
+}
 kubectl rollout restart statefulset/todo-app-stset --namespace="${NAMESPACE}" || {
     print_warning "Failed to restart StatefulSet (may not exist yet)"
 }
@@ -312,15 +332,27 @@ kubectl rollout status statefulset/todo-app-stset --namespace="${NAMESPACE}" --t
     print_warning "StatefulSet rollout may not be complete"
 }
 
-kubectl wait --for=condition=available statefulset/todo-app-stset --namespace="${NAMESPACE}" --timeout=300s || {
-    print_warning "StatefulSet may not be available yet"
-}
+    kubectl wait --for=condition=available statefulset/todo-app-stset --namespace="${NAMESPACE}" --timeout=300s || {
+        print_warning "StatefulSet may not be available yet"
+    }
 
-print_info "Waiting for pods to be ready..."
-kubectl wait --for=condition=ready pod -l app=todo-app-stset --namespace="${NAMESPACE}" --timeout=60s || {
-    print_warning "Some pods may not be ready yet"
-}
+    print_info "Waiting for Frontend Deployment to be available..."
+    kubectl rollout status deployment/todo-app-frontend-deployment --namespace="${NAMESPACE}" --timeout=300s || {
+        print_warning "Frontend Deployment rollout may not be complete"
+    }
 
+    kubectl wait --for=condition=available deployment/todo-app-frontend-deployment --namespace="${NAMESPACE}" --timeout=300s || {
+        print_warning "Frontend Deployment may not be available yet"
+    }
+
+    print_info "Waiting for Backend Deployment to be available..."
+    kubectl rollout status deployment/todo-app-backend-deployment --namespace="${NAMESPACE}" --timeout=300s || {
+        print_warning "Backend Deployment rollout may not be complete"
+    }
+
+    kubectl wait --for=condition=available deployment/todo-app-backend-deployment --namespace="${NAMESPACE}" --timeout=300s || {
+        print_warning "Backend Deployment may not be available yet"
+    }
 # ----------------------------------------------------------------------------
 # DEPLOYMENT STATUS
 # ----------------------------------------------------------------------------
@@ -328,16 +360,11 @@ print_header "📊 DEPLOYMENT STATUS"
 print_info "StatefulSets:"
 kubectl get statefulsets --namespace="${NAMESPACE}"
 
+print_info "Deployments:"
+kubectl get deployments --namespace="${NAMESPACE}"
+
 print_info "Pods:"
 kubectl get pods --namespace="${NAMESPACE}"
-
-# ----------------------------------------------------------------------------
-# APPLICATION LOGS
-# ----------------------------------------------------------------------------
-print_header "📝 APPLICATION LOGS"
-kubectl logs statefulset/todo-app-stset --namespace="${NAMESPACE}" --all-containers --tail=50 || {
-    print_warning "Could not retrieve logs"
-}
 
 # ----------------------------------------------------------------------------
 # DEPLOYMENT COMPLETE
@@ -352,8 +379,14 @@ print_info "Your todo application is now running in Kubernetes"
 print_header "🔧 HELPFUL COMMANDS"
 cat << EOF
 ${CYAN}Application Access:${NC}
-  🌐 Frontend: http://localhost:8081
-  🔧 Backend API: http://localhost:8081/todos
+  🌐 Get Ingress IP:
+    kubectl get ingress -n ${NAMESPACE} todo-app-ingress
+  
+  🌐 Frontend & Backend: Use the Ingress IP from above
+    Frontend: http://<INGRESS_IP>/
+    Backend API: http://<INGRESS_IP>/todos
+  
+  📝 Note: Frontend uses relative paths, so it works automatically with any Ingress IP
 
 ${CYAN}Monitoring Access:${NC}
   📊 Grafana:

@@ -17,6 +17,7 @@ spec:
       containers:
         - name: todo-app-backend-db
           image: TODO_APP_BACKEND_DB_IMAGE/TAG
+          imagePullPolicy: Always
           ports:
             - name: web
               containerPort: 5432

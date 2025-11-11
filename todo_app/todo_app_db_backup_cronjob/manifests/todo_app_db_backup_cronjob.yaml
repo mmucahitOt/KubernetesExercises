@@ -4,7 +4,7 @@ metadata:
   name: todo-app-backup-cronjob
   namespace: project
 spec:
-  schedule: "* * * * *"  # Run every minute (for testing - change back to "0 0 * * *" for daily at midnight)
+  schedule: "0 0 * * *" # for daily backup at midnight
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
   jobTemplate:

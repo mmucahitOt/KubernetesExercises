@@ -1,7 +1,10 @@
 import axios from "axios";
 import { config } from "../config/env";
 
-const url = config.backendApiUrl + "/todos";
+// Use relative path - works with Ingress routing
+// Ingress routes /todos to backend service
+// config.backendApiUrl already includes "/todos" or defaults to "/todos"
+const url = config.backendApiUrl;
 
 export const createTodo = async ({ text }) => {
   const response = await axios.post(url, {

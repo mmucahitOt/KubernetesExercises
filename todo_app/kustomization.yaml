@@ -30,7 +30,8 @@ configMapGenerator:
 resources:
   - manifests/namespace.yaml
   - manifests/backup-serviceaccount.yaml
-  - manifests/deployment.yaml
+  - manifests/deployment_backend.yaml
+  - manifests/deployment_frontend.yaml
   - manifests/statefulset.yaml
   
   - manifests/headless_service.yaml
@@ -38,6 +39,8 @@ resources:
   - todo_app/manifests/service.yaml
   - todo_app_backend/manifests/service.yaml
   
+  - manifests/horizontal_scaler_backend.yaml
+
   - manifests/persistent_volume.yaml
   - manifests/persistent_volume_claim.yaml
   - todo_app_add_job/manifests/todo_app_add_job.yaml
