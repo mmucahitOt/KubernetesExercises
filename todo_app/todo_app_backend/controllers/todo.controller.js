@@ -24,7 +24,8 @@ async function create(req, res) {
     // Log successful creation
     logInfo("Todo created successfully", {
       todoId: todo.id,
-      textLength: text.length,
+      textLength: text ? text.length : 0,
+      text: text,
     });
 
     return res.status(201).json(todo);

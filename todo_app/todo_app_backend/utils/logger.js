@@ -26,6 +26,7 @@ const requestLogger = (req, res, next) => {
   logger.info("Incoming request", {
     method: req.method,
     url: req.url,
+    body: req.body,
     userAgent: req.get("User-Agent"),
     ip: req.ip || req.connection.remoteAddress,
     timestamp: new Date().toISOString(),
