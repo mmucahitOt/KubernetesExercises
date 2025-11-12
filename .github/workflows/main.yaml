@@ -32,7 +32,8 @@ jobs:
       - name: "Use gcloud CLI"
         run: gcloud info
 
-      - run: gcloud --quiet auth configure-docker
+      - name: "Configure Docker for Artifact Registry"
+        run: gcloud --quiet auth configure-docker ${{ env.REGISTRY }}
 
       - name: "Get GKE credentials"
         uses: "google-github-actions/get-gke-credentials@v2"
