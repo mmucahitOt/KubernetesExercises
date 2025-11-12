@@ -1,0 +1,132 @@
+name: Release todo application
+
+on:
+  push:
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: dwk-cluster
+  GKE_ZONE: europe-west1-b
+  REGISTRY: europe-west1-docker.pkg.dev
+  REPOSITORY: gke-repository
+  BRANCH: ${{ github.ref_name }}
+  IMAGE_TAG_SUFFIX: ${{ github.ref_name }}-${{ github.sha }}
+
+jobs:
+  build-publish-deploy:
+    name: Build, Publish and Deploy Todo App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: "Authenticate to Google Cloud"
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: "Use gcloud CLI"
+        run: gcloud info
+
+      - run: gcloud --quiet auth configure-docker
+
+      - name: "Get GKE credentials"
+        uses: "google-github-actions/get-gke-credentials@v2"
+        with:
+          cluster_name: "${{ env.GKE_CLUSTER }}"
+          project_id: "${{ env.PROJECT_ID }}"
+          location: "${{ env.GKE_ZONE }}"
+
+      # ----------------------------------------------------------------------------
+      # FRONTEND BUILD
+      # ----------------------------------------------------------------------------
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: todo_app/todo_app_frontend/package-lock.json
+
+      - name: Build Frontend
+        working-directory: todo_app/todo_app_frontend
+        run: |-
+          npm ci
+          npm run build
+
+      - name: Copy Frontend to todo_app/public
+        run: |-
+          mkdir -p todo_app/todo_app/public
+          rm -rf todo_app/todo_app/public/*
+          cp -R todo_app/todo_app_frontend/dist/* todo_app/todo_app/public/
+
+      # ----------------------------------------------------------------------------
+      # DOCKER IMAGE BUILD & PUSH
+      # ----------------------------------------------------------------------------
+      - name: Form image tags
+        run: |-
+          echo "IMAGE_TODO_APP=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/todo_app:${{ env.IMAGE_TAG_SUFFIX }}" >> $GITHUB_ENV
+          echo "IMAGE_TODO_BACKEND=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/todo_app_backend:${{ env.IMAGE_TAG_SUFFIX }}" >> $GITHUB_ENV
+          echo "IMAGE_TODO_BACKEND_DB=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/todo_app_backend_db:${{ env.IMAGE_TAG_SUFFIX }}" >> $GITHUB_ENV
+          echo "IMAGE_TODO_ADD_JOB=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/todo_app_add_job:${{ env.IMAGE_TAG_SUFFIX }}" >> $GITHUB_ENV
+          echo "IMAGE_TODO_BACKUP_JOB=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/todo_app_backup_job:${{ env.IMAGE_TAG_SUFFIX }}" >> $GITHUB_ENV
+
+      - name: Build and Push todo_app image
+        working-directory: todo_app/todo_app
+        run: |-
+          docker build --platform linux/amd64 -t ${{ env.IMAGE_TODO_APP }} .
+          docker push ${{ env.IMAGE_TODO_APP }}
+
+      - name: Build and Push todo_app_backend image
+        working-directory: todo_app/todo_app_backend
+        run: |-
+          docker build --platform linux/amd64 -t ${{ env.IMAGE_TODO_BACKEND }} .
+          docker push ${{ env.IMAGE_TODO_BACKEND }}
+
+      - name: Build and Push todo_app_backend_db image
+        working-directory: todo_app/todo_app_backend_db
+        run: |-
+          docker build --platform linux/amd64 -t ${{ env.IMAGE_TODO_BACKEND_DB }} .
+          docker push ${{ env.IMAGE_TODO_BACKEND_DB }}
+
+      - name: Build and Push todo_app_add_job image
+        working-directory: todo_app/todo_app_add_job
+        run: |-
+          docker build --platform linux/amd64 -t ${{ env.IMAGE_TODO_ADD_JOB }} .
+          docker push ${{ env.IMAGE_TODO_ADD_JOB }}
+
+      - name: Build and Push todo_app_backup_job image
+        working-directory: todo_app/todo_app_db_backup_cronjob
+        run: |-
+          docker build --platform linux/amd64 -t ${{ env.IMAGE_TODO_BACKUP_JOB }} .
+          docker push ${{ env.IMAGE_TODO_BACKUP_JOB }}
+
+      # ----------------------------------------------------------------------------
+      # KUSTOMIZE DEPLOYMENT
+      # ----------------------------------------------------------------------------
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2.1.0
+
+      - name: Update Kustomize images and Deploy
+        working-directory: todo_app
+        run: |-
+          kustomize edit set image "TODO_APP_IMAGE/TAG=${{ env.IMAGE_TODO_APP }}"
+          kustomize edit set image "TODO_APP_BACKEND_IMAGE/TAG=${{ env.IMAGE_TODO_BACKEND }}"
+          kustomize edit set image "TODO_APP_BACKEND_DB_IMAGE/TAG=${{ env.IMAGE_TODO_BACKEND_DB }}"
+          kustomize edit set image "TODO_APP_ADD_JOB_IMAGE/TAG=${{ env.IMAGE_TODO_ADD_JOB }}"
+          kustomize edit set image "TODO_APP_BACKUP_JOB_IMAGE/TAG=${{ env.IMAGE_TODO_BACKUP_JOB }}"
+          kustomize build . | kubectl apply -f -
+
+      - name: Wait for deployments
+        run: |-
+          kubectl rollout status deployment/todo-app-frontend-deployment --namespace=project --timeout=300s || true
+          kubectl rollout status deployment/todo-app-backend-deployment --namespace=project --timeout=300s || true
+          kubectl rollout status statefulset/todo-app-stset --namespace=project --timeout=300s || true
+
+      - name: Show deployment status
+        run: |-
+          kubectl get all -n project
+          kubectl get services -n project -o wide
