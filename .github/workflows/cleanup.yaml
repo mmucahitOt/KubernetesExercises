@@ -3,6 +3,13 @@ name: Cleanup environment on branch deletion
 on:
   delete:
     # Trigger on deletion of any branch or tag
+  workflow_dispatch:
+    # Allow manual triggering
+    inputs:
+      branch_name:
+        description: "Branch name to cleanup (optional, uses deleted branch if not provided)"
+        required: false
+        type: string
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
@@ -15,10 +22,19 @@ jobs:
   cleanup-environment:
     name: Cleanup Environment
     runs-on: ubuntu-latest
-    # Only run if the deleted ref is a branch (not a tag)
-    if: github.event.ref_type == 'branch'
+    # Only run if the deleted ref is a branch (not a tag), or if manually triggered
+    if: |
+      (github.event_name == 'delete' && github.event.ref_type == 'branch') ||
+      github.event_name == 'workflow_dispatch'
 
     steps:
+      - name: Debug event information
+        run: |-
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref type: ${{ github.event.ref_type }}"
+          echo "Ref: ${{ github.event.ref }}"
+          echo "Input branch: ${{ github.event.inputs.branch_name }}"
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -39,7 +55,13 @@ jobs:
 
       - name: Set branch name and sanitize for namespace
         run: |-
-          BRANCH_NAME="${{ github.event.ref }}"
+          # Use manual input if provided, otherwise use deleted branch name
+          if [ -n "${{ github.event.inputs.branch_name }}" ]; then
+            BRANCH_NAME="${{ github.event.inputs.branch_name }}"
+          else
+            BRANCH_NAME="${{ github.event.ref }}"
+          fi
+
           # Sanitize branch name for Kubernetes namespace (lowercase, replace / and _ with -, remove invalid chars)
           NAMESPACE=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g' | cut -c1-63)
           echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
