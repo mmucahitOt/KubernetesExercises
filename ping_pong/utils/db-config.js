@@ -1,7 +1,6 @@
 const { Sequelize } = require("sequelize");
 const config = require("./config");
 
-console.log("DB SASDASD", config.DB_URL);
 const sequelize = new Sequelize(config.DB_URL);
 
 const connectToDb = async () => {
@@ -9,7 +8,6 @@ const connectToDb = async () => {
     await sequelize.authenticate();
     console.log("Connection has been established successfully.");
   } catch (error) {
-    console.log("errırrrrrr", error);
     console.error("Unable to connect to the database:", error);
   }
 };

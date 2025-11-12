@@ -5,6 +5,11 @@ class CountRepository {
   constructor() {
     this.counter_id = 1;
   }
+
+  async findAll() {
+    return await PingCount.findAll();
+  }
+
   async getCurrentCount() {
     return await PingCount.findByPk(this.counter_id);
   }

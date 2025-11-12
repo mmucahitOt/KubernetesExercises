@@ -33,3 +33,9 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"  
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: ${PING_PONG_PORT}
+            initialDelaySeconds: 10
+            periodSeconds: 5

@@ -55,6 +55,12 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "100m"  
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: ${LOG_OUTPUT_PORT}
+            initialDelaySeconds: 10
+            periodSeconds: 5
         - name: read-output-container
           image: ${DOCKER_REGISTRY}/read_output:amd64-v1
           imagePullPolicy: Always

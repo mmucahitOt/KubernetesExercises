@@ -6,6 +6,10 @@ class RequestCounter {
     this.countRepository = new CountRepository();
   }
 
+  async findAll() {
+    return await this.countRepository.findAll();
+  }
+
   async increaseCount() {
     const result = await this.countRepository.incrementCountByOne();
     return result.dataValues.count;
