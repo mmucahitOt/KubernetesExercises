@@ -128,11 +128,13 @@ jobs:
 
       - name: Wait for deployments
         run: |-
-          kubectl rollout status deployment/todo-app-frontend-deployment --namespace=project --timeout=300s || true
-          kubectl rollout status deployment/todo-app-backend-deployment --namespace=project --timeout=300s || true
-          kubectl rollout status statefulset/todo-app-stset --namespace=project --timeout=300s || true
+          NAMESPACE="${{ github.ref_name }}"
+          kubectl rollout status deployment/todo-app-frontend-deployment --namespace="${NAMESPACE}" --timeout=300s || true
+          kubectl rollout status deployment/todo-app-backend-deployment --namespace="${NAMESPACE}" --timeout=300s || true
+          kubectl rollout status statefulset/todo-app-stset --namespace="${NAMESPACE}" --timeout=300s || true
 
       - name: Show deployment status
         run: |-
-          kubectl get all -n project
-          kubectl get services -n project -o wide
+          NAMESPACE="${{ github.ref_name }}"
+          kubectl get all -n "${NAMESPACE}"
+          kubectl get services -n "${NAMESPACE}" -o wide

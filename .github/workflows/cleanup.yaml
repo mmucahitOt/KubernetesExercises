@@ -1,0 +1,124 @@
+name: Cleanup environment on branch deletion
+
+on:
+  delete:
+    # Trigger on deletion of any branch or tag
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: dwk-cluster
+  GKE_ZONE: europe-west1-b
+  REGISTRY: europe-west1-docker.pkg.dev
+  REPOSITORY: gke-repository
+
+jobs:
+  cleanup-environment:
+    name: Cleanup Environment
+    runs-on: ubuntu-latest
+    # Only run if the deleted ref is a branch (not a tag)
+    if: github.event.ref_type == 'branch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: "Authenticate to Google Cloud"
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: "Set up Cloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: "Get GKE credentials"
+        uses: "google-github-actions/get-gke-credentials@v2"
+        with:
+          cluster_name: "${{ env.GKE_CLUSTER }}"
+          project_id: "${{ env.PROJECT_ID }}"
+          location: "${{ env.GKE_ZONE }}"
+
+      - name: Set branch name and sanitize for namespace
+        run: |-
+          BRANCH_NAME="${{ github.event.ref }}"
+          # Sanitize branch name for Kubernetes namespace (lowercase, replace / and _ with -, remove invalid chars)
+          NAMESPACE=$(echo "${BRANCH_NAME}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g' | cut -c1-63)
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+          echo "NAMESPACE=${NAMESPACE}" >> $GITHUB_ENV
+          echo "Branch to cleanup: ${BRANCH_NAME}"
+          echo "Sanitized namespace: ${NAMESPACE}"
+
+      # ----------------------------------------------------------------------------
+      # DELETE KUBERNETES NAMESPACE (cascades to all resources)
+      # ----------------------------------------------------------------------------
+      - name: Delete Kubernetes namespace
+        run: |-
+          NAMESPACE="${{ env.NAMESPACE }}"
+          echo "Deleting namespace: ${NAMESPACE}"
+
+          # Check if namespace exists
+          if kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1; then
+            echo "Namespace ${NAMESPACE} exists, deleting..."
+            kubectl delete namespace "${NAMESPACE}" --wait=true --timeout=300s || {
+              echo "Warning: Namespace deletion timed out or failed, forcing deletion..."
+              kubectl delete namespace "${NAMESPACE}" --grace-period=0 --force || true
+            }
+            echo "✅ Namespace ${NAMESPACE} deleted successfully"
+          else
+            echo "ℹ️  Namespace ${NAMESPACE} does not exist, skipping"
+          fi
+
+      # ----------------------------------------------------------------------------
+      # DELETE DOCKER IMAGES (optional cleanup)
+      # ----------------------------------------------------------------------------
+      - name: Delete Docker images for branch
+        continue-on-error: true
+        run: |-
+          BRANCH_NAME="${{ env.BRANCH_NAME }}"
+          IMAGE_NAMES=(
+            "todo_app"
+            "todo_app_backend"
+            "todo_app_backend_db"
+            "todo_app_add_job"
+            "todo_app_backup_job"
+          )
+
+          echo "Cleaning up Docker images for branch: ${BRANCH_NAME}"
+
+          for IMAGE_NAME in "${IMAGE_NAMES[@]}"; do
+            IMAGE_PATH="${REGISTRY}/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}"
+            
+            echo "Searching for images matching: ${IMAGE_PATH}:${BRANCH_NAME}-*"
+            
+            # List all tags for this image that match the branch pattern
+            TAGS=$(gcloud artifacts docker images list "${IMAGE_PATH}" \
+              --format="value(tags)" \
+              --filter="tags:${BRANCH_NAME}-*" \
+              --include-tags 2>/dev/null || echo "")
+            
+            if [ -n "${TAGS}" ]; then
+              echo "Found tags to delete for ${IMAGE_NAME}:"
+              echo "${TAGS}" | tr ',' '\n' | grep "${BRANCH_NAME}-" | while read -r TAG; do
+                if [ -n "${TAG}" ]; then
+                  FULL_IMAGE="${IMAGE_PATH}:${TAG}"
+                  echo "  Deleting: ${FULL_IMAGE}"
+                  gcloud artifacts docker images delete "${FULL_IMAGE}" --quiet || true
+                fi
+              done
+            else
+              echo "  No images found for ${IMAGE_NAME} with branch pattern ${BRANCH_NAME}-*"
+            fi
+          done
+
+          echo "✅ Docker image cleanup completed"
+
+      - name: Cleanup summary
+        run: |-
+          echo "## 🧹 Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.event.ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Actions taken:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Kubernetes namespace deleted (if existed)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Docker images cleaned up (if existed)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Environment cleanup completed successfully! 🎉" >> $GITHUB_STEP_SUMMARY

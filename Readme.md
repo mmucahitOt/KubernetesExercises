@@ -40,6 +40,8 @@
   ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [3.7
   ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
+- [3.8
+  ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [3.9](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app) **Exercise 3.9: DBaaS vs DIY Database Comparison** DBaaS -> (Google Cloud SQL)requires minimal initialization (create instance, configure network access, set credentials), while DIY (StatefulSet + PVC) needs multiple Kubernetes resources, PostgreSQL configuration, and initialization scripts, making setup more time-consuming. DBaaS costs more (instance fees, storage, backups), while DIY is cheaper (mainly storage, uses existing cluster resources). DBaaS maintenance is low (automated patching, backups, monitoring, HA failover), whereas DIY requires significant manual work (updates, security patches, backup implementation, monitoring setup, performance tuning). DBaaS backups are automated with point-in-time recovery and simple restore, while DIY requires manual backup implementation via CronJobs or scripts with more complex restore procedures. DBaaS provides built-in HA and security with automatic failover and patches, while DIY requires manual replication setup and security management. DBaaS has limited customization and vendor lock-in, while DIY offers full control over PostgreSQL configuration and is portable. For production, DBaaS minimizes operational overhead despite higher cost; for development or when cost and control are priorities, DIY is suitable if you have the expertise.
 - [3.10](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [3.11
