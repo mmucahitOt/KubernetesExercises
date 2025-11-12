@@ -111,20 +111,23 @@ jobs:
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2.1.0
 
-      - name: Set Kustomize namespace
+      - name: Create namespace and set context
         run: |-
           kubectl create namespace ${{ github.ref_name }} || true
           kubectl config set-context --current --namespace=${{ github.ref_name }}
-          kustomize edit set namespace ${{ github.ref_name }}
 
       - name: Update Kustomize images and Deploy
         working-directory: todo_app
         run: |-
+          # Set namespace in kustomization.yaml
+          kustomize edit set namespace ${{ github.ref_name }}
+          # Update image tags
           kustomize edit set image "TODO_APP_IMAGE/TAG=${{ env.IMAGE_TODO_APP }}"
           kustomize edit set image "TODO_APP_BACKEND_IMAGE/TAG=${{ env.IMAGE_TODO_BACKEND }}"
           kustomize edit set image "TODO_APP_BACKEND_DB_IMAGE/TAG=${{ env.IMAGE_TODO_BACKEND_DB }}"
           kustomize edit set image "TODO_APP_ADD_JOB_IMAGE/TAG=${{ env.IMAGE_TODO_ADD_JOB }}"
           kustomize edit set image "TODO_APP_BACKUP_JOB_IMAGE/TAG=${{ env.IMAGE_TODO_BACKUP_JOB }}"
+          # Deploy
           kustomize build . | kubectl apply -f -
 
       - name: Wait for deployments
