@@ -4,6 +4,8 @@ const config = require("./utils/config");
 const ImageRequestManager = require("./utils/image-request-manager");
 
 const port = Number(config.port) || 3000;
+const healthCheckPort = 3541; // Static port for health checks
+
 const app = express();
 const imageRequestManager = new ImageRequestManager();
 
@@ -32,6 +34,17 @@ app.get("/randomimage", (req, res) => {
     });
 });
 
+// Main app server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+});
+
+// Separate health check server on static port
+const healthCheckApp = express();
+healthCheckApp.get("/healthz", (req, res) => {
+  res.status(200).send("OK");
+});
+
+healthCheckApp.listen(healthCheckPort, () => {
+  console.log(`Health check server is running on port ${healthCheckPort}`);
 });

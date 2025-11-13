@@ -12,6 +12,10 @@ async function getTodoById(id) {
   return await Todo.findByPk(id);
 }
 
+async function findAll() {
+  return await Todo.findAll();
+}
+
 async function deleteTodoById(id) {
   return await Todo.destroy({ where: { id } });
 }
@@ -21,4 +25,5 @@ module.exports = {
   listTodos,
   getTodoById,
   deleteTodoById,
+  findAll,
 };

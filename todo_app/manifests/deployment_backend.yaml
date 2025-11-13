@@ -38,6 +38,18 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "100m"
+          readinessProbe:
+            initialDelaySeconds: 10 
+            periodSeconds: 5
+            httpGet:
+               path: /healthz
+               port: 3541
+          livenessProbe:
+            initialDelaySeconds: 20 
+            periodSeconds: 5
+            httpGet:
+               path: /healthz
+               port: 3541
       volumes:
         - name: todo-app-config-vol
           configMap:
