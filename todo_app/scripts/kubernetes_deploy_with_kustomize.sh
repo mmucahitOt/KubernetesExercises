@@ -11,6 +11,38 @@
 # using Kustomize. It follows a hybrid approach:
 #   - Helm charts for monitoring (Prometheus/Grafana/Alloy)
 #   - Kustomize for application manifests
+#
+# ============================================================================
+# SCRIPT ARGUMENTS
+# ============================================================================
+# Usage: ./kubernetes_deploy_with_kustomize.sh <docker-registry> [build_images]
+#
+# Arguments:
+#   1. docker-registry (REQUIRED)
+#      - Docker registry username or registry URL
+#      - Images will be tagged as: <docker-registry>/<image-name>:<tag>
+#      - Example: "mmucahit0" or "gcr.io/my-project"
+#
+#   2. build_images (OPTIONAL, default: true)
+#      - Controls whether to build and push Docker images
+#      - Accepts: true, false, yes, no, 1, 0, skip
+#      - If false/skip: Uses existing images in registry (faster for re-deployments)
+#      - If true: Builds all 5 images (todo_app, todo_app_backend, etc.)
+#      - Example: "./kubernetes_deploy_with_kustomize.sh mmucahit0 false"
+#
+# Environment Variables:
+#   - MONITORING_SCRIPTS: Controls monitoring setup approach
+#     - Set to "true" or unset (default): Runs Helm-based monitoring setup scripts
+#       * Installs Prometheus + Grafana stack via Helm
+#       * Installs Grafana Alloy + Loki via Helm
+#       * Configures Grafana data sources
+#       * Use this for full monitoring stack with Helm charts
+#     - Set to "false": Uses Kustomize manifests only
+#       * Applies monitoring manifests from kustomization.yaml
+#       * Simpler, faster deployment
+#       * Example: export MONITORING_SCRIPTS=false
+#
+# ============================================================================
 
 # ============================================================================
 # COLOR DEFINITIONS
@@ -77,7 +109,7 @@ export TODO_APP_BACKEND_DB_URL="postgres://todo_user:todo_password@localhost:543
 export RANDOM_IMAGE_PATH="/app/files/image.jpeg"
 
 # Monitoring configuration
-MONITORING_SCRIPTS="${MONITORING_SCRIPTS:-false}"
+MONITORING_SCRIPTS="${MONITORING_SCRIPTS:-true}"
 
 # Kubernetes cluster configuration
 CLUSTER_NAME="k3d-k3s-default"

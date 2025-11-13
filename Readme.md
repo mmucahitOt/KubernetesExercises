@@ -48,4 +48,6 @@
   ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [3.12](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app) - [new todo logs screenshot link](todo_app/Screenshot_new_todo.png)
 - [4.1](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
-- [4.2](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
+- [4.2
+  ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
+- [4.3](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app) prometeus query: count(kube_pod_info{namespace="project"} * on(pod) group_left(owner_kind) kube_pod_owner{owner_kind=~"StatefulSet|Deployment", namespace="project"})
