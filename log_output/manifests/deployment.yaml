@@ -22,6 +22,7 @@ spec:
         - name: shared-files
           persistentVolumeClaim:
             claimName: shared-claim
+        
       containers:
         - name: log-output-container
           image: ${DOCKER_REGISTRY}/log_output:amd64-v1
@@ -45,6 +46,11 @@ spec:
                 configMapKeyRef:
                   name: log-output-configmap
                   key: information_file_name
+            - name: MESSAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-configmap
+                  key: message
           ports:
             - name: http
               containerPort: ${LOG_OUTPUT_PORT}

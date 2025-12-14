@@ -19,9 +19,6 @@ echo "=================================="
 
 print_info "Setting up Grafana + Prometheus monitoring stack..."
 
-# Get namespace from environment or use default
-NAMESPACE="${NAMESPACE:-exercises}"
-
 # 1. Add Helm repositories
 print_info "Adding Helm repositories..."
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -29,33 +26,26 @@ helm repo update
 print_success "Helm repositories added and updated"
 
 # 2. Install Prometheus + Grafana stack
-print_info "Installing Prometheus + Grafana stack in namespace: ${NAMESPACE}..."
-helm install prometheus-stack prometheus-community/kube-prometheus-stack --namespace "${NAMESPACE}" \
+print_info "Installing Prometheus + Grafana stack..."
+helm install prometheus-stack prometheus-community/kube-prometheus-stack --namespace exercises \
   --set grafana.adminPassword=admin123 \
   --set grafana.service.type=ClusterIP \
   --set grafana.persistence.enabled=true \
   --set grafana.persistence.size=1Gi \
   --set prometheus.prometheusSpec.retention=7d \
-  --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage=2Gi \
-  --create-namespace
+  --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage=2Gi
 
 if [ $? -eq 0 ]; then
   print_success "Prometheus + Grafana stack installed successfully"
 else
-  print_warning "Installation may have failed or already exists, checking status..."
-  # Check if it's already installed
-  if helm list --namespace "${NAMESPACE}" | grep -q prometheus-stack; then
-    print_info "Prometheus stack already installed, skipping..."
-  else
-    print_error "Failed to install Prometheus + Grafana stack"
-    exit 1
-  fi
+  print_error "Failed to install Prometheus + Grafana stack"
+  exit 1
 fi
 
 # 3. Wait for pods to be ready
 print_info "Waiting for pods to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --namespace "${NAMESPACE}" --timeout=5m || true
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus --namespace "${NAMESPACE}" --timeout=5m || true
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --namespace exercises --timeout=5m
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus --namespace exercises --timeout=5m
 print_success "All pods are ready"
 
 # 4. Services are automatically created by Helm
@@ -65,18 +55,21 @@ print_success "Prometheus service: prometheus-stack-kube-prom-prometheus"
 
 # 5. Show status
 print_info "Current status:"
-kubectl get pods --namespace "${NAMESPACE}" -l "app.kubernetes.io/name in (grafana,prometheus)"
-kubectl get services --namespace "${NAMESPACE}" -l "app.kubernetes.io/name in (grafana,prometheus)"
+kubectl get pods --namespace exercises -l "app.kubernetes.io/name in (grafana,prometheus)"
+kubectl get services --namespace exercises -l "app.kubernetes.io/name in (grafana,prometheus)"
 
 # 6. Show access information
 echo ""
 print_success "🎉 Step 1 Complete: Grafana + Prometheus installed!"
 echo ""
 print_info "📊 Access Information:"
-print_info "  Grafana: kubectl -n ${NAMESPACE} port-forward svc/prometheus-stack-grafana 3000:80"
-print_info "  Then visit: http://localhost:3000 (admin/admin123)"
-print_info "  Prometheus: kubectl -n ${NAMESPACE} port-forward svc/prometheus-stack-kube-prom-prometheus 9090:9090"
-print_info "  Then visit: http://localhost:9090"
+print_info "  Grafana:"
+print_info "    kubectl -n exercises port-forward svc/prometheus-stack-grafana 3000:80"
+print_info "    Then visit: http://localhost:3000 (admin/admin123)"
+print_info ""
+print_info "  Prometheus:"
+print_info "    kubectl -n exercises port-forward svc/prometheus-stack-kube-prom-prometheus 9090:9090"
+print_info "    Then visit: http://localhost:9090"
 echo ""
 print_info "📋 What's included:"
 print_info "  ✅ Prometheus (metrics collection)"
@@ -86,4 +79,3 @@ print_info "  ✅ Kubernetes cluster metrics"
 print_info "  ✅ AlertManager (for alerts)"
 echo ""
 print_info "🎯 Next step: Run step2_grafana_alloy_loki.sh to add log collection"
-

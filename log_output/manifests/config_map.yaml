@@ -4,7 +4,7 @@ metadata:
   name: log-output-configmap
   namespace: exercises
 data:
-  MESSAGE: "hello world"
+  message: "hello world"
   information_file_name: information.txt
   information.txt: |
-    "this text is from file"
+    this text is from file

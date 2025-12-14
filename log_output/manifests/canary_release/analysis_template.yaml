@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: ping-pong-restart-rate
+  namespace: exercises
+spec:
+  metrics:
+  - name: ping-pong-restart-rate
+    initialDelay: 2m
+    successCondition: result < 2
+    provider:
+      prometheus:
+        address: http://prometheus-stack-kube-prom-prometheus.exercises.svc.cluster.local:9090
+        query: |
+          scalar(
+            sum(kube_pod_container_status_restarts_total{namespace="exercises", container="ping-pong-container"}) -
+            sum(kube_pod_container_status_restarts_total{namespace="exercises", container="ping-pong-container"} offset 2m)
+          )

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ping-pong-deployment
+  namespace: exercises
+  labels:
+    app: ping-pong-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ping-pong-deployment
+  template:
+    metadata:
+      labels:
+        app: ping-pong-deployment
+    spec:
+      containers:
+        - name: ping-pong-container
+          image: ${DOCKER_REGISTRY}/ping_pong:amd64-v1
+          ports:
+            - name: http
+              containerPort: ${PING_PONG_PORT}
+          env:
+            - name: PING_PONG_PORT
+              value: "${PING_PONG_PORT}"
+            - name: PING_PONG_DB_URL
+              value: "${PING_PONG_DB_URL}"
+          readinessProbe:
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            httpGet:
+              path: /healthz
+              port: ${PING_PONG_PORT}
+          livenessProbe:
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            httpGet:
+              path: /healthz
+              port: ${PING_PONG_PORT}
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"

@@ -62,23 +62,24 @@ LOG_OUTPUT_ROOT_MANIFESTS_DIR="${LOG_OUTPUT_ROOT}/manifests"
 LOG_OUTPUT_MANIFESTS_DIR="${LOG_OUTPUT_DIR}/manifests"
 READ_OUTPUT_MANIFESTS_DIR="${READ_OUTPUT_DIR}/manifests"
 PING_PONG_MANIFESTS_DIR="${PING_PONG_DIR}/manifests/statefulset"
+MONITORING_DIR="${LOG_OUTPUT_ROOT}/scripts/monitoring"
 
 # Build the Docker images (use absolute contexts)
 print_header "🐳 BUILDING DOCKER IMAGES"
 print_info "Building log_output image..."
-docker buildx build --platform linux/amd64 -t log_output:amd64-v1 "${LOG_OUTPUT_DIR}"
+docker buildx build --platform linux/amd64 --no-cache -t log_output:amd64-v1 "${LOG_OUTPUT_DIR}"
 print_success "log_output image built"
 
 print_info "Building read_output image..."
-docker buildx build --platform linux/amd64 -t read_output:amd64-v1 "${READ_OUTPUT_DIR}"
+docker buildx build --platform linux/amd64 --no-cache -t read_output:amd64-v1 "${READ_OUTPUT_DIR}"
 print_success "read_output image built"
 
 print_info "Building ping_pong image..."
-docker buildx build --platform linux/amd64 -t ping_pong:amd64-v1 "${PING_PONG_DIR}"
+docker buildx build --platform linux/amd64 --no-cache -t ping_pong:amd64-v1 "${PING_PONG_DIR}"
 print_success "ping_pong image built"
 
 print_info "Building ping_pong_db image..."
-docker buildx build --platform linux/amd64 -t ping_pong_db:amd64-v1 "${PING_PONG_DIR}/database"
+docker buildx build --platform linux/amd64 --no-cache -t ping_pong_db:amd64-v1 "${PING_PONG_DIR}/database"
 print_success "ping_pong_db image built"
 
 # Tag the images for Docker Hub
@@ -118,8 +119,8 @@ export PING_PONG_PORT=4001
 export READ_OUTPUT_PORT=4002
 export LOG_FILE_PATH="/usr/src/app/files/log.txt"
 export REQUEST_COUNT_FILE_PATH="/usr/src/app/shared_files/count.txt"
-export PING_PONG_URL="http://ping-pong-stset-svc:2346"
-export PING_PONG_DB_URL="postgres://pingpong_user:pingpong_password@localhost:5432/pingpong_db"
+export PING_PONG_URL="http://ping-pong-svc:2346"
+export PING_PONG_DB_URL="postgres://pingpong_user:pingpong_password@ping-pong-stset-db-svc:5432/pingpong_db"
 print_success "Environment variables configured"
 
 print_header "📁 NAMESPACE SETUP"
@@ -146,6 +147,48 @@ print_info "Activating namespace..."
 kubens exercises
 print_success "Namespace activated"
 
+# Monitoring configuration
+MONITORING_SCRIPTS="${MONITORING_SCRIPTS:-true}"
+MONITORING_DIR="${LOG_OUTPUT_ROOT}/scripts/monitoring"
+
+# ----------------------------------------------------------------------------
+# MONITORING SETUP
+# ----------------------------------------------------------------------------
+print_header "📊 MONITORING SETUP"
+if [ "${MONITORING_SCRIPTS}" = "true" ]; then
+    print_info "MONITORING_SCRIPTS=true → running monitoring scripts"
+    
+    # Step 1: Prometheus + Grafana Stack
+    if [ -f "${MONITORING_DIR}/step1_grafana_prometheus.sh" ]; then
+        print_info "Running Step 1: Prometheus + Grafana stack..."
+        bash "${MONITORING_DIR}/step1_grafana_prometheus.sh" || {
+            print_warning "Prometheus/Grafana installation had issues (may already be installed)"
+        }
+    else
+        print_warning "Monitoring script not found: ${MONITORING_DIR}/step1_grafana_prometheus.sh"
+    fi
+    
+    # Step 2: Grafana Alloy + Loki
+    if [ -f "${MONITORING_DIR}/step2_grafana_alloy_loki.sh" ]; then
+        print_info "Running Step 2: Grafana Alloy + Loki..."
+        bash "${MONITORING_DIR}/step2_grafana_alloy_loki.sh" || {
+            print_warning "Grafana Alloy/Loki installation had issues (may already be installed)"
+        }
+        
+        # Configure Grafana data sources
+        if [ -f "${MONITORING_DIR}/configure_grafana_datasources.sh" ]; then
+            print_info "Configuring Grafana data sources..."
+            bash "${MONITORING_DIR}/configure_grafana_datasources.sh" || {
+                print_warning "Grafana data source configuration had issues"
+            }
+        fi
+    else
+        print_warning "Monitoring script not found: ${MONITORING_DIR}/step2_grafana_alloy_loki.sh"
+    fi
+else
+    print_info "MONITORING_SCRIPTS=false → skipping monitoring setup"
+fi
+
 # Apply the Kubernetes manifest with substituted variables
 print_info "Applying Persistent Volume Claims..."
 envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/persistent_volume_claim.yaml" | kubectl apply -f -
@@ -160,6 +203,7 @@ print_success "ConfigMap applied"
 print_info "Applying Deployments..."
 envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/statefulset.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/deployment.yaml" | kubectl apply -f -
 print_success "Deployments applied"
 
 print_info "Applying Services..."
@@ -167,6 +211,7 @@ envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/headless_service.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/cluster_ip_service.yaml" | kubectl apply -f -
+envsubst < "${PING_PONG_MANIFESTS_DIR}/service.yaml" | kubectl apply -f -
 print_success "Services applied"
 
 print_info "Applying Gateway..."
@@ -174,20 +219,21 @@ envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/gateway.yaml" | kubectl apply -f -
 print_success "Gateway applied"
 
 print_info "Applying HTTP Routes..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
+envsubst < "${LOG_OUTPUT_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
 envsubst < "${READ_OUTPUT_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
 envsubst < "${PING_PONG_MANIFESTS_DIR}/http_route.yaml" | kubectl apply -f -
 print_success "HTTP Routes applied"
-
-print_info "Applying Gateway Rewrite Routes..."
-envsubst < "${LOG_OUTPUT_ROOT_MANIFESTS_DIR}/gateway_rewrite_routes.yaml" | kubectl apply -f -
-print_success "Gateway Rewrite Routes applied"
 
 print_header "⏳ WAITING FOR DEPLOYMENTS"
 print_info "Waiting for log-output-deployment to be available..."
 kubectl rollout status deployment/log-output-deployment --timeout=100s
 kubectl wait --for=condition=available deployment/log-output-deployment --timeout=300s
 print_success "log-output-deployment is ready"
+
+print_info "Waiting for ping-pong-deployment to be available..."
+kubectl rollout status deployment/ping-pong-deployment --timeout=100s
+kubectl wait --for=condition=available deployment/ping-pong-deployment --timeout=300s
+print_success "ping-pong-deployment is ready"
 
 print_info "Waiting for ping-pong-stset to be available..."
 kubectl rollout status statefulset/ping-pong-stset --timeout=100s
@@ -200,7 +246,18 @@ kubectl get deployments
 print_info "Statefulsets:"
 kubectl get statefulsets
 
-print_header "🎉 DEPLOYMENT COMPLETE"
-print_success "All applications deployed successfully!"
-print_info "Your application is now running in Kubernetes"
-
+print_header "📊 MONITORING ACCESS"
+print_info "To access Grafana (monitoring dashboard):"
+print_info "  kubectl -n exercises port-forward svc/prometheus-stack-grafana 3000:80"
+print_info "  Then visit: http://localhost:3000 (admin/admin123)"
+print_info ""
+print_info "To access Prometheus directly:"
+print_info "  kubectl -n exercises port-forward svc/prometheus-stack-kube-prom-prometheus 9090:9090"
+print_info "  Then visit: http://localhost:9090"
+print_info ""
+print_info "To access Loki:"
+print_info "  kubectl -n exercises port-forward svc/loki 3100:3100"
+print_info "  Then visit: http://localhost:3100"
+print_info ""
+print_info "To query logs in Grafana:"
+print_info "  Use LogQL: {namespace=\"exercises\"} |= \"log-output\""

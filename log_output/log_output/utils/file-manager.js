@@ -26,9 +26,17 @@ class FileManager {
       const content = this.readFileSync(filePath);
       if (!content) return null;
 
-      // Extract MESSAGE value from the file content
-      const match = content.match(/MESSAGE="([^"]+)"/);
-      return match ? match[1] : null;
+      // Read file content directly, trim whitespace and remove surrounding quotes if present
+      let fileContent = content.trim();
+      // Remove surrounding quotes if the entire content is quoted
+      if (
+        (fileContent.startsWith('"') && fileContent.endsWith('"')) ||
+        (fileContent.startsWith("'") && fileContent.endsWith("'"))
+      ) {
+        fileContent = fileContent.slice(1, -1);
+      }
+
+      return fileContent || null;
     } catch (error) {
       console.error("Error reading message from config file:", error.message);
       return null;

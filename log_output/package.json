@@ -5,7 +5,8 @@
   "scripts": {
     "sentRequestToPod": "bash scripts/send_request_to_pod.sh",
     "deploy": "bash scripts/kubernetes_deploy.sh",
-    "undeploy": "bash scripts/kubernetes_undeploy.sh"
+    "undeploy": "bash scripts/kubernetes_undeploy.sh",
+    "canary-deploy": "bash scripts/canary_release/canary_deploy.sh"
   },
   "author": "",
   "license": "ISC",

@@ -12,12 +12,12 @@ spec:
         type: PathPrefix
         value: /pingpong
     backendRefs:
-    - name: ping-pong-stset-svc
+    - name: ping-pong-deployment-svc
       port: 2346
   - matches:
     - path:
         type: PathPrefix
         value: /pings
     backendRefs:
-    - name: ping-pong-stset-svc
+    - name: ping-pong-deployment-svc
       port: 2346

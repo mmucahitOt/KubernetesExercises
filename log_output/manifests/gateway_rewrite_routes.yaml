@@ -18,7 +18,7 @@ spec:
               type: ReplacePrefixMatch
               replacePrefixMatch: /
       backendRefs:
-        - name: ping-pong-stset-svc
+        - name: ping-pong-svc
           port: 2346
     - matches:
         - path:
@@ -31,7 +31,7 @@ spec:
               type: ReplacePrefixMatch
               replacePrefixMatch: /
       backendRefs:
-        - name: ping-pong-stset-svc
+        - name: ping-pong-svc
           port: 2346
     - matches:
         - path:
