@@ -51,3 +51,4 @@
 - [4.2
   ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [4.3](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app) prometeus query: count(kube_pod_info{namespace="project"} * on(pod) group_left(owner_kind) kube_pod_owner{owner_kind=~"StatefulSet|Deployment", namespace="project"})
+- [4.4](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
