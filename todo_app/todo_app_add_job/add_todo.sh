@@ -32,6 +32,6 @@ fi
 # Escape single quotes for SQL literal
 TODO_ESCAPED=${TODO_TEXT//\'/\'\'}
 
-SQL="INSERT INTO todos(text) VALUES ('$TODO_ESCAPED') RETURNING id, text, created_at;"
+SQL="INSERT INTO todos(text) VALUES ('$TODO_ESCAPED') RETURNING id, text, done, created_at;"
 
 psql -X -q -v ON_ERROR_STOP=1 "$TODO_APP_BACKEND_DB_URL" -c "$SQL"

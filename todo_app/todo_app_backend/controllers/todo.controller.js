@@ -95,6 +95,35 @@ async function getById(req, res) {
   }
 }
 
+async function update(req, res) {
+  try {
+    const { id } = req.params;
+    const { done } = req.body || {};
+
+    logInfo("Updating todo", { todoId: id, done });
+
+    if (typeof done !== "boolean") {
+      logWarn("Todo update failed: invalid done field", {
+        todoId: id,
+        doneType: typeof done,
+      });
+      return res.status(400).json({ error: "Field 'done' must be a boolean" });
+    }
+
+    const todo = await repo.updateTodoById(id, { done });
+    if (!todo) {
+      logWarn("Todo not found for update", { todoId: id });
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    logInfo("Todo updated successfully", { todoId: id, done });
+    return res.json(todo);
+  } catch (error) {
+    logError("Failed to update todo", error, { todoId: req.params.id });
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 async function remove(req, res) {
   try {
     const { id } = req.params;
@@ -114,4 +143,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { create, list, getById, remove };
+module.exports = { create, list, getById, update, remove };

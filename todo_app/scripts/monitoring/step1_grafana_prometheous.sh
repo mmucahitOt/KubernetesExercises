@@ -27,7 +27,7 @@ print_success "Helm repositories added and updated"
 
 # 2. Install Prometheus + Grafana stack
 print_info "Installing Prometheus + Grafana stack..."
-helm install prometheus-stack prometheus-community/kube-prometheus-stack --namespace exercises \
+helm install prometheus-stack prometheus-community/kube-prometheus-stack --namespace project \
   --set grafana.adminPassword=admin123 \
   --set grafana.service.type=ClusterIP \
   --set grafana.persistence.enabled=true \
@@ -44,8 +44,8 @@ fi
 
 # 3. Wait for pods to be ready
 print_info "Waiting for pods to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --namespace exercises --timeout=5m
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus --namespace exercises --timeout=5m
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --namespace project --timeout=5m
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus --namespace project --timeout=5m
 print_success "All pods are ready"
 
 # 4. Services are automatically created by Helm
@@ -55,8 +55,8 @@ print_success "Prometheus service: prometheus-stack-kube-prom-prometheus"
 
 # 5. Show status
 print_info "Current status:"
-kubectl get pods --namespace exercises -l "app.kubernetes.io/name in (grafana,prometheus)"
-kubectl get services --namespace exercises -l "app.kubernetes.io/name in (grafana,prometheus)"
+kubectl get pods --namespace project -l "app.kubernetes.io/name in (grafana,prometheus)"
+kubectl get services --namespace project -l "app.kubernetes.io/name in (grafana,prometheus)"
 
 # 6. Show access information
 echo ""
@@ -64,11 +64,11 @@ print_success "🎉 Step 1 Complete: Grafana + Prometheus installed!"
 echo ""
 print_info "📊 Access Information:"
 print_info "  Grafana:"
-print_info "    kubectl -n exercises port-forward svc/prometheus-stack-grafana 3000:80"
+print_info "    kubectl -n project port-forward svc/prometheus-stack-grafana 3000:80"
 print_info "    Then visit: http://localhost:3000 (admin/admin123)"
 print_info ""
 print_info "  Prometheus:"
-print_info "    kubectl -n exercises port-forward svc/prometheus-stack-kube-prom-prometheus 9090:9090"
+print_info "    kubectl -n project port-forward svc/prometheus-stack-kube-prom-prometheus 9090:9090"
 print_info "    Then visit: http://localhost:9090"
 echo ""
 print_info "📋 What's included:"

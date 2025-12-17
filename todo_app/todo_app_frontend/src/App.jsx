@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { config } from './config/env'
 import { TodoCreate } from './components/TodoCreate'
 import { TodoList } from './components/TodoList'
@@ -15,14 +15,26 @@ function App() {
     })
   }
 
-  const getTodoList = () => {
-    todoService.getTodoList().then((data) => {
-      const todos = data.map(elem => elem.text)
-      setTodos(todos)
+  const markAsDone = (todoId) => {
+    todoService.updateTodo({
+      id: todoId,
+      done: true
+    }).then(() => {
+      getTodoList()
     })
   }
 
-  useState(() => {
+  const getTodoList = () => {
+    todoService.getTodoList().then((data) => {
+      if (Array.isArray(data)) {
+        setTodos(data)
+      } else {
+        setTodos([])
+      }
+    })
+  }
+
+  useEffect(() => {
     getTodoList()
   }, [])
   return (
@@ -30,8 +42,19 @@ function App() {
       <h1>The project App</h1>
       <img src={config.apiUrl + "/randomimage"} alt="Random" />
       <TodoCreate createTodo={createTodo} />
-      <TodoList todos={todos} />
-      <h4>DevOps with Kubernetes 2025</h4>
+      <h3>Todo</h3>
+      <TodoList todos={todos.filter(todo => todo.done === false)} markAsDone={markAsDone} />
+      <h3>Done</h3>
+      <TodoList todos={todos.filter(todo => todo.done === true)} markAsDone={markAsDone} />
+      <p>
+        <a
+          href="https://courses.mooc.fi/org/uh-cs/courses/devops-with-kubernetes"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          DevOps with Kubernetes 2025
+        </a>
+      </p>
     </div>
   )
 }

@@ -86,6 +86,16 @@ npm run deploy <docker-registry>
 
 # Undeploy and cleanup (with beautiful logging)
 npm run undeploy <docker-registry>
+
+# Deploy canary release of todo_app app (requires stable deployment first)
+npm run canary-deploy-frontend <docker-registry> [version]
+
+# Deploy canary release of todo_app_backend app (requires stable deployment first)
+npm run canary-deploy-backend <docker-registry> [version]
+```
+
+```
+
 ```
 
 ## 🎯 Example Deployment Output
@@ -117,6 +127,23 @@ npm run undeploy <docker-registry>
 ℹ️  Building todo_app_backend image...
 ✅ todo_app_backend image built
 ```
+
+### Canary Release
+
+The canary release uses Argo Rollouts to gradually shift traffic from the stable version to the new version:
+
+- **Prerequisites**: Run `npm run deploy <docker-registry>` first to create the stable deployment and service
+- **Usage**: `npm run canary-deploy <docker-registry> [version]` (default version: `amd64-v2`)
+- **Traffic Shifting**: 25% → 50% → 100% (with analysis and pauses)
+- **Management Commands**:
+  - Check status: `kubectl argo rollouts get rollout ping-pong-rollout -n exercises`
+  - Promote to next step: `kubectl argo rollouts promote ping-pong-rollout -n exercises`
+  - Abort canary: `kubectl argo rollouts abort ping-pong-rollout -n exercises`
+
+Notes:
+
+- Services under each project are `ClusterIP`. For external access use `kubectl port-forward`, Ingress, or publish NodePorts via k3d.
+- Ensure environment variables referenced in manifests (e.g., `LOG_OUTPUT_PORT`, `READ_OUTPUT_PORT`, `PING_PONG_URL`) are provided by the deploy script.
 
 ## 🎯 Features
 

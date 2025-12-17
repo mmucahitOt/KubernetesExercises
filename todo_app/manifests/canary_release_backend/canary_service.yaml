@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app-backend-canary-svc
+  namespace: project
+spec:
+  type: ClusterIP
+  selector:
+    app: todo-app-backend-deployment
+  ports:
+    - port: 2346
+      protocol: TCP
+      targetPort: ${TODO_APP_BACKEND_PORT}

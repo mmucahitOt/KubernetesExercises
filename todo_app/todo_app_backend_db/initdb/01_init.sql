@@ -2,8 +2,9 @@
 CREATE TABLE IF NOT EXISTS todos (
     id SERIAL PRIMARY KEY,
     text TEXT NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    done BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
 );
 
 -- Seed one row if table is empty

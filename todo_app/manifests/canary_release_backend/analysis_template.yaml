@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: todo-app-backend-restart-rate
+  namespace: project
+spec:
+  metrics:
+  - name: todo-app-backend-restart-rate
+    initialDelay: 2m
+    successCondition: result < 2
+    provider:
+      prometheus:
+        address: http://prometheus-stack-kube-prom-prometheus.project.svc.cluster.local:9090
+        query: |
+          scalar(
+            sum(kube_pod_container_status_restarts_total{namespace="project", container="todo-app-backend-container"}) -
+            sum(kube_pod_container_status_restarts_total{namespace="project", container="todo-app-backend-container"} offset 2m)
+          )

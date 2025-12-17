@@ -41,7 +41,7 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
 # Get namespace from environment or use default
-NAMESPACE="${NAMESPACE:-exercises}"
+NAMESPACE="${NAMESPACE:-project}"
 
 # Check if ClusterRole exists from a different namespace
 if kubectl get clusterrole grafana-alloy >/dev/null 2>&1; then
@@ -77,16 +77,16 @@ fi
 
 # 4. Wait for pods to be ready
 print_info "Waiting for Loki and Grafana Alloy pods to be ready..."
-kubectl wait --for=condition=ready pod -l app=loki --namespace exercises --timeout=5m
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=alloy --namespace exercises --timeout=5m
+kubectl wait --for=condition=ready pod -l app=loki --namespace project --timeout=5m
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=alloy --namespace project --timeout=5m
 print_success "Loki and Grafana Alloy pods are ready"
 
 # 5. Show status
 print_info "Current status:"
-kubectl get pods --namespace exercises -l "app=loki"
-kubectl get pods --namespace exercises -l "app.kubernetes.io/name=alloy"
-kubectl get services --namespace exercises -l "app=loki"
-kubectl get services --namespace exercises -l "app.kubernetes.io/name=alloy"
+kubectl get pods --namespace project -l "app=loki"
+kubectl get pods --namespace project -l "app.kubernetes.io/name=alloy"
+kubectl get services --namespace project -l "app=loki"
+kubectl get services --namespace project -l "app.kubernetes.io/name=alloy"
 
 # 6. Show access information
 echo ""
@@ -95,7 +95,7 @@ echo ""
 print_info "📝 What's included:"
 print_info "  ✅ Loki (log storage with filesystem backend)"
 print_info "  ✅ Grafana Alloy (modern log collection)"
-print_info "  ✅ Automatic log collection from all pods in exercises namespace"
+print_info "  ✅ Automatic log collection from all pods in project namespace"
 print_info "  ✅ Kubernetes integration enabled"
 print_info "  ✅ Single binary deployment (simple and reliable)"
 echo ""
@@ -105,9 +105,9 @@ print_info "  2. Test log collection from your log_output app"
 print_info "  3. Create dashboards for log analysis"
 echo ""
 print_info "📊 Access Loki:"
-print_info "  kubectl -n exercises port-forward svc/loki 3100:3100"
+print_info "  kubectl -n project port-forward svc/loki 3100:3100"
 print_info "  Then visit: http://localhost:3100"
 echo ""
 print_info "📊 Access Grafana Alloy:"
-print_info "  kubectl -n exercises port-forward svc/grafana-alloy 12345:12345"
+print_info "  kubectl -n project port-forward svc/grafana-alloy 12345:12345"
 print_info "  Then visit: http://localhost:12345"

@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: todo-app-backend-rollout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app-backend-deployment
+  strategy:
+    canary:
+      stableService: todo-app-backend-deployment-svc 
+      canaryService: todo-app-backend-canary-svc
+      steps:
+      - setWeight: 25
+      - pause:
+          duration: 30s
+      - setWeight: 50
+      - analysis:
+          templates:
+          - templateName: todo-app-backend-restart-rate
+      - pause:
+          duration: 30s
+  template:
+    metadata:
+      labels:
+        app: todo-app-backend-deployment
+    spec:
+      containers:
+        - name: todo-app-backend-container
+          image: ${DOCKER_REGISTRY}/todo_app_backend:${IMAGE_VERSION}
+          ports:
+            - name: http
+              containerPort: ${TODO_APP_BACKEND_PORT}
+          env:
+            - name: TODO_APP_BACKEND_PORT
+              value: "${TODO_APP_BACKEND_PORT}"
+            - name: PING_PONG_DB_URL
+              value: "${PING_PONG_DB_URL}"
+          readinessProbe:
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            httpGet:
+              path: /healthz
+              port: ${TODO_APP_BACKEND_PORT}
+          livenessProbe:
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            httpGet:
+              path: /healthz
+              port: ${TODO_APP_BACKEND_PORT}
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"

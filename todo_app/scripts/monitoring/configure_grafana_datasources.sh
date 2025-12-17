@@ -17,7 +17,7 @@ echo "=================================="
 echo "🔧 CONFIGURING GRAFANA DATA SOURCES"
 echo "=================================="
 
-NAMESPACE="exercises"
+NAMESPACE="project"
 
 print_info "Configuring Grafana data sources for Loki and Prometheus..."
 
@@ -62,5 +62,5 @@ print_info "  Then visit: http://localhost:3000 (admin/admin123)"
 echo ""
 print_info "📝 You can now:"
 print_info "  - Query logs in Grafana Explore using LogQL"
-print_info "  - Example query: {namespace=\"exercises\"} |= \"log-output\""
+print_info "  - Example query: {namespace=\"project\"} |= \"log-output\""
 print_info "  - View metrics in pre-configured dashboards"

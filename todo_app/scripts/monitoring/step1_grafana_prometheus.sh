@@ -20,7 +20,7 @@ echo "=================================="
 print_info "Setting up Grafana + Prometheus monitoring stack..."
 
 # Get namespace from environment or use default
-NAMESPACE="${NAMESPACE:-exercises}"
+NAMESPACE="${NAMESPACE:-project}"
 
 # 1. Add Helm repositories
 print_info "Adding Helm repositories..."
