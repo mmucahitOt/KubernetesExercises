@@ -6,6 +6,7 @@ This folder contains:
 - Helper scripts to build, deploy, and undeploy (`scripts/`)
 - Subprojects: `todo_app` (server), `todo_app_backend` (API), `todo_app_frontend` (React)
 - **NEW**: `todo_app_add_job` (CronJob that automatically adds Wikipedia articles as todos)
+- **NEW**: `todo_app_broadcaster` (Service that broadcasts todo events to Discord)
 
 ## 🎨 Enhanced Scripts with Beautiful Logging
 
@@ -33,6 +34,10 @@ All deployment and undeployment scripts now feature:
 - **Database Integration**: Direct PostgreSQL connection to insert todos
 - **Docker Image**: Lightweight Alpine-based image with psql and curl
 - **Manifest**: `todo_app_add_job/manifests/todo_app_add_job.yaml` (CronJob spec)
+
+## 📢 Todo Broadcasting (`todo_app_broadcaster/`)
+
+Todo events (create, update, delete) are automatically broadcasted to the corresponding Discord group via webhook.
 
 ## 📊 Monitoring & Logging Stack
 

@@ -5,6 +5,7 @@ const { initDb } = require("./utils/db-config");
 const todoRouter = require("./routers/todo.router");
 const { requestLogger, logInfo, logError } = require("./utils/logger");
 const todoRepository = require("./repository/todo-repository");
+const { initNats } = require("./utils/nats");
 
 const port = Number(config.port) || 3003;
 const healthCheckPort = 3541; // Static port for health checks
@@ -24,7 +25,6 @@ app.get("/", (req, res) => {
 
 app.use("/todos", todoRouter);
 
-
 // Separate health check server on static port
 const healthCheckApp = express();
 healthCheckApp.get("/healthz", async (req, res) => {
@@ -38,6 +38,7 @@ healthCheckApp.get("/healthz", async (req, res) => {
 });
 
 initDb()
+  .then(() => initNats())
   .then(() => {
     app.listen(port, () => {
       logInfo("Todo backend server started", { port });
@@ -52,4 +53,3 @@ initDb()
     logError("Failed to initialize database", error);
     process.exit(1);
   });
-

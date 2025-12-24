@@ -47,17 +47,17 @@ agent:
   
   configMap:
     content: |
-      // Use Kubernetes API to collect logs directly
+      // Discover all pods in the project namespace using Kubernetes API
+      discovery.kubernetes "pods" {
+        role = "pod"
+        namespaces {
+          names = ["project"]
+        }
+      }
+
+      // Collect logs from all discovered pods using Kubernetes API
       loki.source.kubernetes "kubernetes_logs" {
-        targets = [
-          {
-            __address__ = "kubernetes://todo-app-stset-0.project",
-            __meta_kubernetes_namespace = "project",
-            __meta_kubernetes_pod_name = "todo-app-stset-0",
-            __meta_kubernetes_pod_container_name = "todo-app-backend-container",
-            __meta_kubernetes_pod_uid = "5cd29f5a-6b2a-407a-826d-089414ad404c",
-          },
-        ]
+        targets = discovery.kubernetes.pods.targets
         forward_to = [loki.process.kubernetes_logs.receiver]
       }
 
@@ -65,21 +65,34 @@ agent:
       loki.process "kubernetes_logs" {
         forward_to = [loki.write.default.receiver]
 
+        // Parse CRI log format
         stage.cri { }
         
+        // Extract service name from JSON logs (Winston format) - must be before labels stage
+        stage.json {
+          expressions = {
+            service_name = "service",
+          }
+        }
+        
+        // Extract labels from Kubernetes metadata and JSON content, add them to the log stream
         stage.labels {
           values = {
             namespace = "__meta_kubernetes_namespace",
             pod = "__meta_kubernetes_pod_name",
             container = "__meta_kubernetes_pod_container_name",
             node = "__meta_kubernetes_node_name",
+            app = "__meta_kubernetes_pod_label_app",
+            deployment = "__meta_kubernetes_pod_controller_name",
+            service_name = "service_name",  // Use the extracted JSON value
           }
         }
       }
 
+      // Write logs to Loki using full FQDN for better DNS resolution
       loki.write "default" {
         endpoint {
-          url = "http://loki:3100/loki/api/v1/push"
+          url = "http://loki.project.svc.cluster.local:3100/loki/api/v1/push"
         }
         external_labels = {}
       }

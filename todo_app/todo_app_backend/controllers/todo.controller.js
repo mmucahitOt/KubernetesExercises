@@ -1,11 +1,11 @@
 const repo = require("../repository/todo-repository");
 const { logError, logInfo, logWarn } = require("../utils/logger");
+const { publishEvent, TODO_SUBJECTS } = require("../utils/nats");
 
 async function create(req, res) {
   try {
     const { text } = req.body || {};
 
-    // Log the incoming request
     logInfo("Creating new todo", {
       textLength: text ? text.length : 0,
       hasText: !!text,
@@ -21,18 +21,23 @@ async function create(req, res) {
 
     const todo = await repo.createTodo({ text });
 
-    // Log successful creation
     logInfo("Todo created successfully", {
       todoId: todo.id,
       textLength: text ? text.length : 0,
       text: text,
     });
 
+    publishEvent(TODO_SUBJECTS.todo_created, {
+      title: "Todo created",
+      message: `Todo "${todo.text}" was created with id ${todo.id}.`,
+      todoId: todo.id,
+      text: todo.text,
+      createdAt: todo.createdAt,
+    });
+
     return res.status(201).json(todo);
   } catch (error) {
-    // Handle Sequelize validation errors
     if (error.name === "SequelizeValidationError") {
-      // Extract only essential validation error info
       const validationErrors = error.errors.map((err) => ({
         field: err.path,
         message: err.message,
@@ -52,7 +57,6 @@ async function create(req, res) {
         error: error.errors[0].message,
       });
     }
-    // Handle other errors
     logError("Todo creation failed: unexpected error", error, {
       textLength: req.body?.text?.length || 0,
       textPreview: req.body?.text
@@ -117,6 +121,17 @@ async function update(req, res) {
     }
 
     logInfo("Todo updated successfully", { todoId: id, done });
+
+    publishEvent(TODO_SUBJECTS.todo_updated, {
+      title: "Todo updated",
+      message: `Todo "${todo.text}" (id ${todo.id}) was marked as ${
+        todo.done ? "done" : "not done"
+      }.`,
+      todoId: todo.id,
+      done: todo.done,
+      updatedAt: todo.updatedAt,
+    });
+
     return res.json(todo);
   } catch (error) {
     logError("Failed to update todo", error, { todoId: req.params.id });
@@ -136,6 +151,14 @@ async function remove(req, res) {
     }
 
     logInfo("Todo deleted successfully", { todoId: id });
+
+    publishEvent(TODO_SUBJECTS.todo_deleted, {
+      title: "Todo deleted",
+      message: `Todo with id ${id} was deleted.`,
+      todoId: id,
+      deletedAt: new Date().toISOString(),
+    });
+
     return res.status(204).send();
   } catch (error) {
     logError("Failed to delete todo", error, { todoId: req.params.id });

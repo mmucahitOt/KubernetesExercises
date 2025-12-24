@@ -10,6 +10,8 @@ images:
     newName: mmucahit0/todo_app:amd64-v1
   - name: TODO_APP_BACKEND_IMAGE/TAG
     newName: mmucahit0/todo_app_backend:amd64-v1
+  - name: TODO_APP_BROADCASTER_IMAGE/TAG
+    newName: mmucahit0/todo_app_broadcaster:amd64-v1
   - name: TODO_APP_BACKEND_DB_IMAGE/TAG
     newName: mmucahit0/todo_app_backend_db:amd64-v1
   - name: TODO_APP_ADD_JOB_IMAGE/TAG
@@ -24,6 +26,8 @@ configMapGenerator:
       - TODO_APP_BACKEND_PORT=4001
       - RANDOM_IMAGE_PATH=/app/files/image.jpeg
       - TODO_APP_BACKEND_DB_URL=postgres://todo_user:todo_password@todo-stset-db-svc:5432/todo_db
+      - NATS_URL=nats://nats:4222   
+      - DISCORD_WEBHOOK_URL=https://study.cs.helsinki.fi/discord/webhooks/1264842173619109949
     options:
       disableNameSuffixHash: true
 
@@ -32,20 +36,25 @@ resources:
   - manifests/backup-serviceaccount.yaml
   - manifests/deployment_backend.yaml
   - manifests/deployment_frontend.yaml
+  - manifests/deployment_broadcaster.yaml
   - manifests/statefulset.yaml
+  
   
   - manifests/headless_service.yaml
   - manifests/ingress.yaml
   - todo_app/manifests/service.yaml
   - todo_app_backend/manifests/service.yaml
-  
-  - manifests/horizontal_scaler_backend.yaml
+  - todo_app_broadcaster/manifests/service.yaml
 
   - manifests/persistent_volume.yaml
   - manifests/persistent_volume_claim.yaml
   - todo_app_add_job/manifests/todo_app_add_job.yaml
   - todo_app_db_backup_cronjob/manifests/todo_app_db_backup_cronjob.yaml 
 
+
   - manifests/monitoring/loki-configmap.yaml
   - manifests/monitoring/loki-service.yaml
   - manifests/monitoring/loki-deployment.yaml
+
+  - manifests/nats/deployment_nats.yaml
+  - manifests/nats/service.yaml

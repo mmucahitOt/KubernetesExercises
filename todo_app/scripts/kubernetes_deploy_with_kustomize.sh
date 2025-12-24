@@ -12,6 +12,11 @@
 #   - Helm charts for monitoring (Prometheus/Grafana/Alloy)
 #   - Kustomize for application manifests
 #
+# Supported Clusters:
+#   - GKE (Google Kubernetes Engine) - fully supported
+#   - k3d (local development) - fully supported
+#   - Other Kubernetes clusters (EKS, AKS, etc.) - should work
+#
 # ============================================================================
 # SCRIPT ARGUMENTS
 # ============================================================================
@@ -112,7 +117,9 @@ export RANDOM_IMAGE_PATH="/app/files/image.jpeg"
 MONITORING_SCRIPTS="${MONITORING_SCRIPTS:-true}"
 
 # Kubernetes cluster configuration
-CLUSTER_NAME="k3d-k3s-default"
+# CLUSTER_NAME is only used for k3d clusters (for image import, storage setup)
+# For GKE or other clusters, this is ignored
+CLUSTER_NAME="${K3D_CLUSTER_NAME:-k3d-k3s-default}"
 NAMESPACE="project"
 
 # Docker images configuration (avoid associative arrays for macOS bash 3.2)
@@ -121,6 +128,7 @@ IMAGE_TODO_BACKEND="todo_app_backend:amd64-v1"
 IMAGE_TODO_BACKEND_DB="todo_app_backend_db:amd64-v1"
 IMAGE_TODO_ADD_JOB="todo_app_add_job:amd64-v1"
 IMAGE_TODO_BACKUP_JOB="todo_app_backup_job:amd64-v1" 
+IMAGE_TODO_BROADCASTER="todo_app_broadcaster:amd64-v1"
 
 # ============================================================================
 # DIRECTORY RESOLUTION
@@ -172,7 +180,9 @@ import_images_to_k3d() {
         "${IMAGE_TODO_APP}" \
         "${IMAGE_TODO_BACKEND}" \
         "${IMAGE_TODO_BACKEND_DB}" \
-        "${IMAGE_TODO_ADD_JOB}"; do
+        "${IMAGE_TODO_ADD_JOB}" \
+        "${IMAGE_TODO_BROADCASTER}" \
+        "${IMAGE_TODO_BACKUP_JOB}"; do
         registry_tag="${DOCKER_REGISTRY}/${image_name}"
         # Import both local and registry-tagged images
         k3d image import "${image_name}" -c "${CLUSTER_NAME}" 2>/dev/null || true
@@ -240,6 +250,7 @@ if [[ "${BUILD_IMAGES}" == "true" ]]; then
     build_and_push_image "${IMAGE_TODO_BACKEND_DB}" "${TODO_APP_BACKEND_DB_DIR}" || exit 1
     build_and_push_image "${IMAGE_TODO_ADD_JOB}" "${TODO_APP_ADD_JOB_DIR}" || exit 1
     build_and_push_image "${IMAGE_TODO_BACKUP_JOB}" "${TODO_APP_BACKUP_JOB_DIR}" || exit 1
+    build_and_push_image "${IMAGE_TODO_BROADCASTER}" "${TODO_APP_ROOT}/todo_app_broadcaster" || exit 1
 else
     print_header "🐳 SKIPPING DOCKER BUILD & PUSH (per flag)"
     print_info "Using existing images in registry: ${DOCKER_REGISTRY}"
@@ -252,17 +263,36 @@ print_header "☸️  KUBERNETES CLUSTER SETUP"
 print_info "Cluster information:"
 kubectl cluster-info
 
-print_info "Starting cluster..."
-k3d cluster start || true
-print_success "Cluster started successfully"
+# Detect cluster type
+IS_K3D=false
+if command -v k3d >/dev/null 2>&1 && k3d cluster list 2>/dev/null | grep -q "${CLUSTER_NAME}"; then
+    IS_K3D=true
+    print_info "Detected k3d cluster: ${CLUSTER_NAME}"
+else
+    print_info "Detected non-k3d cluster (GKE, EKS, AKS, etc.)"
+fi
+
+# Start cluster (only for k3d)
+if [ "${IS_K3D}" = "true" ]; then
+    print_info "Starting k3d cluster..."
+    k3d cluster start "${CLUSTER_NAME}" || true
+    print_success "Cluster started successfully"
+else
+    print_info "Skipping cluster start (not a k3d cluster - GKE clusters are always running)"
+fi
 
 # ----------------------------------------------------------------------------
 # PERSISTENT STORAGE SETUP
 # ----------------------------------------------------------------------------
 print_header "💾 SETTING UP PERSISTENT STORAGE"
-print_info "Creating storage directory on node..."
-docker exec "${CLUSTER_NAME}-agent-0" mkdir -p /tmp/kube || true
-print_success "Storage directory created"
+# Only setup storage for k3d clusters
+if [ "${IS_K3D}" = "true" ]; then
+    print_info "Creating storage directory on k3d node..."
+    docker exec "${CLUSTER_NAME}-agent-0" mkdir -p /tmp/kube || true
+    print_success "Storage directory created"
+else
+    print_info "Skipping storage setup (GKE uses persistent volumes - no manual setup needed)"
+fi
 
 # ----------------------------------------------------------------------------
 # NAMESPACE SETUP
@@ -272,44 +302,6 @@ print_info "Namespace will be created by Kustomize"
 print_info "Setting namespace context for kubectl commands..."
 kubens "${NAMESPACE}" || true  # Allow failure if namespace doesn't exist yet (Kustomize will create it)
 print_success "Namespace context configured"
-
-# ----------------------------------------------------------------------------
-# MONITORING SETUP (Hybrid Approach: Helm Charts)
-# ----------------------------------------------------------------------------
-print_header "📊 MONITORING SETUP"
-if [ "${MONITORING_SCRIPTS}" = "true" ]; then
-    print_info "MONITORING_SCRIPTS=true → running monitoring scripts"
-    
-    # Step 1: Prometheus + Grafana Stack
-    if [ -f "${MONITORING_DIR}/step1_grafana_prometheus.sh" ]; then
-        print_info "Running Step 1: Prometheus + Grafana stack..."
-        bash "${MONITORING_DIR}/step1_grafana_prometheus.sh" || {
-            print_warning "Prometheus/Grafana installation had issues (may already be installed)"
-        }
-    else
-        print_warning "Monitoring script not found: ${MONITORING_DIR}/step1_grafana_prometheus.sh"
-    fi
-    
-    # Step 2: Grafana Alloy + Loki
-    if [ -f "${MONITORING_DIR}/step2_grafana_alloy_loki.sh" ]; then
-        print_info "Running Step 2: Grafana Alloy + Loki..."
-        bash "${MONITORING_DIR}/step2_grafana_alloy_loki.sh" || {
-            print_warning "Grafana Alloy/Loki installation had issues (may already be installed)"
-        }
-        
-        # Configure Grafana data sources
-        if [ -f "${MONITORING_DIR}/configure_grafana_datasources.sh" ]; then
-            print_info "Configuring Grafana data sources..."
-            bash "${MONITORING_DIR}/configure_grafana_datasources.sh" || {
-                print_warning "Grafana data source configuration had issues"
-            }
-        fi
-    else
-        print_warning "Monitoring script not found: ${MONITORING_DIR}/step2_grafana_alloy_loki.sh"
-    fi
-else
-    print_info "MONITORING_SCRIPTS=false → monitoring manifests applied via Kustomize; skipping scripts"
-fi
 
 # ----------------------------------------------------------------------------
 # KUSTOMIZE DEPLOYMENT
@@ -324,6 +316,7 @@ if command -v kustomize >/dev/null 2>&1; then
     kustomize edit set image "TODO_APP_BACKEND_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_backend:amd64-v1"
     kustomize edit set image "TODO_APP_BACKEND_DB_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_backend_db:amd64-v1"
     kustomize edit set image "TODO_APP_ADD_JOB_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_add_job:amd64-v1"
+    kustomize edit set image "TODO_APP_BROADCASTER_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_broadcaster:amd64-v1"
     kustomize edit set image "TODO_APP_BACKUP_JOB_IMAGE/TAG=${DOCKER_REGISTRY}/todo_app_backup_job:amd64-v1"
     popd >/dev/null || exit 1
     print_success "Kustomize images updated"
@@ -331,9 +324,14 @@ else
     print_warning "kustomize not installed; using images declared in kustomize.yaml"
 fi
 
-# Import images into k3d cluster before applying manifests
-print_info "Importing images into k3d cluster..."
-import_images_to_k3d
+# Import images into k3d cluster before applying manifests (only for k3d clusters)
+# For GKE, images are pulled from Docker Hub registry automatically
+if [ "${IS_K3D}" = "true" ]; then
+    print_info "Importing images into k3d cluster (for faster local development)..."
+    import_images_to_k3d
+else
+    print_info "Skipping k3d image import (GKE will pull images from Docker Hub registry)"
+fi
 
 # Apply Kustomize manifests
 print_info "Applying Kustomize manifests..."
@@ -343,6 +341,93 @@ if ! kubectl apply -k "${TODO_APP_ROOT}"; then
 fi
 print_success "Kustomize apply complete"
 
+# Wait for namespace to be created
+print_info "Waiting for namespace to be ready..."
+kubectl wait --for=condition=Active namespace/"${NAMESPACE}" --timeout=30s || {
+    print_warning "Namespace may not be ready yet"
+}
+print_success "Namespace is ready"
+
+# ----------------------------------------------------------------------------
+# MONITORING SETUP (Hybrid Approach: Helm Charts)
+# Run AFTER namespace is created by Kustomize
+# ----------------------------------------------------------------------------
+print_header "📊 MONITORING SETUP"
+if [ "${MONITORING_SCRIPTS}" = "true" ]; then
+    print_info "MONITORING_SCRIPTS=true → running monitoring scripts"
+    
+    # Fix ClusterRole conflict if it exists from different namespace
+    if kubectl get clusterrole grafana-alloy >/dev/null 2>&1; then
+        CLUSTER_ROLE_NAMESPACE=$(kubectl get clusterrole grafana-alloy -o jsonpath='{.metadata.labels.meta\.helm\.sh/release-namespace}' 2>/dev/null || echo "")
+        if [ -n "${CLUSTER_ROLE_NAMESPACE}" ] && [ "${CLUSTER_ROLE_NAMESPACE}" != "${NAMESPACE}" ]; then
+            print_warning "ClusterRole 'grafana-alloy' exists from namespace '${CLUSTER_ROLE_NAMESPACE}'"
+            print_info "Deleting old ClusterRole to avoid conflict..."
+            kubectl delete clusterrole grafana-alloy || true
+            print_success "Old ClusterRole deleted"
+        fi
+    fi
+    
+    # Step 1: Prometheus + Grafana Stack
+    # Check for both possible filenames (prometheus vs prometheous typo)
+    PROMETHEUS_SCRIPT=""
+    if [ -f "${MONITORING_DIR}/step1_grafana_prometheus.sh" ]; then
+        PROMETHEUS_SCRIPT="${MONITORING_DIR}/step1_grafana_prometheus.sh"
+    elif [ -f "${MONITORING_DIR}/step1_grafana_prometheous.sh" ]; then
+        PROMETHEUS_SCRIPT="${MONITORING_DIR}/step1_grafana_prometheous.sh"
+    fi
+    
+    GRAFANA_INSTALLED=false
+    if [ -n "${PROMETHEUS_SCRIPT}" ]; then
+        print_info "Running Step 1: Prometheus + Grafana stack..."
+        export NAMESPACE="${NAMESPACE}"
+        if bash "${PROMETHEUS_SCRIPT}"; then
+            GRAFANA_INSTALLED=true
+            print_success "Step 1 completed - waiting for Grafana pods to be ready..."
+            # Wait for Grafana pods to be ready before proceeding
+            if kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --namespace "${NAMESPACE}" --timeout=5m 2>/dev/null; then
+                print_success "Grafana pods are ready"
+            else
+                print_warning "Grafana pods may not be ready yet, but continuing..."
+            fi
+        else
+            print_warning "Prometheus/Grafana installation had issues (may already be installed)"
+            # Check if Grafana is already installed
+            if kubectl get pods -n "${NAMESPACE}" -l app.kubernetes.io/name=grafana --no-headers 2>/dev/null | grep -q .; then
+                GRAFANA_INSTALLED=true
+                print_info "Grafana appears to be already installed"
+            fi
+        fi
+    else
+        print_warning "Monitoring script not found: ${MONITORING_DIR}/step1_grafana_prometheus.sh or step1_grafana_prometheous.sh"
+    fi
+    
+    # Step 2: Grafana Alloy + Loki
+    if [ -f "${MONITORING_DIR}/step2_grafana_alloy_loki.sh" ]; then
+        print_info "Running Step 2: Grafana Alloy + Loki..."
+        export NAMESPACE="${NAMESPACE}"
+        bash "${MONITORING_DIR}/step2_grafana_alloy_loki.sh" || {
+            print_warning "Grafana Alloy/Loki installation had issues (may already be installed)"
+        }
+        
+        # Configure Grafana data sources (only if Grafana is installed)
+        if [ "${GRAFANA_INSTALLED}" = "true" ]; then
+            if [ -f "${MONITORING_DIR}/configure_grafana_datasources.sh" ]; then
+                print_info "Configuring Grafana data sources..."
+                export NAMESPACE="${NAMESPACE}"
+                bash "${MONITORING_DIR}/configure_grafana_datasources.sh" || {
+                    print_warning "Grafana data source configuration had issues"
+                }
+            fi
+        else
+            print_warning "Skipping Grafana data source configuration (Grafana not installed)"
+        fi
+    else
+        print_warning "Monitoring script not found: ${MONITORING_DIR}/step2_grafana_alloy_loki.sh"
+    fi
+else
+    print_info "MONITORING_SCRIPTS=false → monitoring manifests applied via Kustomize; skipping scripts"
+fi
+
 # Force pod restart to use new images
 print_info "Restarting pods to use new images..."
 kubectl rollout restart deployment/todo-app-frontend-deployment --namespace="${NAMESPACE}" || {
@@ -350,6 +435,9 @@ kubectl rollout restart deployment/todo-app-frontend-deployment --namespace="${N
 }
 kubectl rollout restart deployment/todo-app-backend-deployment --namespace="${NAMESPACE}" || {
     print_warning "Failed to restart Backend Deployment (may not exist yet)"
+}
+kubectl rollout restart deployment/todo-app-broadcaster-deployment --namespace="${NAMESPACE}" || {
+    print_warning "Failed to restart Broadcaster Deployment (may not exist yet)"
 }
 kubectl rollout restart statefulset/todo-app-stset --namespace="${NAMESPACE}" || {
     print_warning "Failed to restart StatefulSet (may not exist yet)"
@@ -384,6 +472,15 @@ kubectl rollout status statefulset/todo-app-stset --namespace="${NAMESPACE}" --t
 
     kubectl wait --for=condition=available deployment/todo-app-backend-deployment --namespace="${NAMESPACE}" --timeout=300s || {
         print_warning "Backend Deployment may not be available yet"
+    }
+
+    print_info "Waiting for Broadcaster Deployment to be available..."
+    kubectl rollout status deployment/todo-app-broadcaster-deployment --namespace="${NAMESPACE}" --timeout=300s || {
+        print_warning "Broadcaster Deployment rollout may not be complete"
+    }
+
+    kubectl wait --for=condition=available deployment/todo-app-broadcaster-deployment --namespace="${NAMESPACE}" --timeout=300s || {
+        print_warning "Broadcaster Deployment may not be available yet"
     }
 # ----------------------------------------------------------------------------
 # DEPLOYMENT STATUS

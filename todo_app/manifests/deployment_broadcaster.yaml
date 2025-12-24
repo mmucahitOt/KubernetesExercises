@@ -1,36 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: todo-app-backend-deployment
+  name: todo-app-broadcaster-deployment
   namespace: project
 spec:
-  replicas: 1
+  replicas: 6
   selector:
     matchLabels:
-      app: todo-app-backend
+      app: todo-app-broadcaster
   template:
     metadata:
       labels:
-        app: todo-app-backend
+        app: todo-app-broadcaster
     spec:
       containers:
-        - name: todo-app-backend-container
-          image: TODO_APP_BACKEND_IMAGE/TAG
+        - name: todo-app-broadcaster-container
+          image: TODO_APP_BROADCASTER_IMAGE/TAG
           imagePullPolicy: Always
           volumeMounts:
             - name: todo-app-config-vol 
               mountPath: "/config"
           env:
-            - name: TODO_APP_BACKEND_PORT
+            - name: DISCORD_WEBHOOK_URL
               valueFrom:
                 configMapKeyRef:
                   name: todo-app-configmap
-                  key: TODO_APP_BACKEND_PORT
-            - name: TODO_APP_BACKEND_DB_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: todo-app-configmap
-                  key: TODO_APP_BACKEND_DB_URL 
+                  key: DISCORD_WEBHOOK_URL 
             - name: NATS_URL
               valueFrom:
                 configMapKeyRef:
