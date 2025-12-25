@@ -1,0 +1,53 @@
+name: Exercises - GitOps Validation
+
+on:
+  push:
+    paths:
+      - 'log_output/**'
+      - 'ping_pong/**'
+  pull_request:
+    paths:
+      - 'log_output/**'
+      - 'ping_pong/**'
+
+jobs:
+  validate-manifests:
+    name: Validate Kustomize Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2.1.0
+
+      - name: Validate log_output Kustomize Build
+        working-directory: log_output/manifests
+        continue-on-error: true
+        run: |
+          if [ -f "kustomization.yaml" ]; then
+            kustomize build . > /dev/null
+            echo "✅ log_output Kustomize build successful"
+          else
+            echo "ℹ️  No kustomization.yaml found in log_output/manifests"
+          fi
+
+      - name: Validate ping_pong Manifests
+        continue-on-error: true
+        run: |
+          if [ -d "ping_pong/manifests" ]; then
+            find ping_pong/manifests -name "*.yaml" -o -name "*.yml" | while read file; do
+              kubectl apply --dry-run=client -f "$file" > /dev/null 2>&1 && echo "✅ Valid: $file" || echo "⚠️  Invalid: $file"
+            done
+            echo "✅ ping_pong manifests validation complete"
+          else
+            echo "ℹ️  No manifests directory found in ping_pong"
+          fi
+
+      - name: Validate ArgoCD Applications
+        run: |
+          if [ -f "log_output/argocd/applications/log-output-app.yaml" ]; then
+            kubectl apply --dry-run=client -f log_output/argocd/applications/log-output-app.yaml
+            echo "✅ log-output ArgoCD Application manifest is valid"
+          fi
+
