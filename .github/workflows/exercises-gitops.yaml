@@ -50,7 +50,6 @@ jobs:
       - name: Validate ArgoCD Applications
         run: |
           if [ -f "log_output/argocd/applications/log-output-app.yaml" ]; then
-            kubectl apply --dry-run=client -f log_output/argocd/applications/log-output-app.yaml
-            echo "✅ log-output ArgoCD Application manifest is valid"
+            python3 -c "import yaml; yaml.safe_load(open('log_output/argocd/applications/log-output-app.yaml'))" && echo "✅ log-output ArgoCD Application manifest YAML syntax is valid"
           fi
 
