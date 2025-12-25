@@ -4,33 +4,32 @@ kind: Kustomization
 namespace: exercises
 
 resources:
-  - namespace.yaml
-  - config_map.yaml
-  - persistent_volume_claim.yaml
-  - deployment.yaml
-  - gateway.yaml
-  - log_output_service.yaml
-  - read_output_service.yaml
-  - log_output_http_route.yaml
-  - read_output_http_route.yaml
-  - ping_pong_deployment.yaml
-  - ping_pong_statefulset.yaml
-  - ping_pong_service.yaml
-  - ping_pong_headless_service.yaml
-  - ping_pong_cluster_ip_service.yaml
-  - ping_pong_http_route.yaml
+- namespace.yaml
+- config_map.yaml
+- persistent_volume_claim.yaml
+- deployment.yaml
+- gateway.yaml
+- log_output_service.yaml
+- read_output_service.yaml
+- log_output_http_route.yaml
+- read_output_http_route.yaml
+- ping_pong_deployment.yaml
+- ping_pong_statefulset.yaml
+- ping_pong_service.yaml
+- ping_pong_headless_service.yaml
+- ping_pong_cluster_ip_service.yaml
+- ping_pong_http_route.yaml
 
 images:
-  - name: DOCKER_REGISTRY/log_output
-    newName: mmucahit0/log_output
-    newTag: amd64-v1
-  - name: DOCKER_REGISTRY/read_output
-    newName: mmucahit0/read_output
-    newTag: amd64-v1
-  - name: DOCKER_REGISTRY/ping_pong
-    newName: mmucahit0/ping_pong
-    newTag: amd64-v1
-  - name: DOCKER_REGISTRY/ping_pong_db
-    newName: mmucahit0/ping_pong_db
-    newTag: amd64-v1
-
+- name: DOCKER_REGISTRY/log_output
+  newName: docker.io/mmucahit0/log_output
+  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
+- name: DOCKER_REGISTRY/ping_pong
+  newName: docker.io/mmucahit0/ping_pong
+  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
+- name: DOCKER_REGISTRY/ping_pong_db
+  newName: docker.io/mmucahit0/ping_pong_db
+  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
+- name: DOCKER_REGISTRY/read_output
+  newName: docker.io/mmucahit0/read_output
+  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
