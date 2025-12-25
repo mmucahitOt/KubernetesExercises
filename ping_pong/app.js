@@ -1,3 +1,4 @@
+// GitOps automated deployment - changes trigger build and validation workflows
 const express = require("express");
 const config = require("./utils/config");
 const {
