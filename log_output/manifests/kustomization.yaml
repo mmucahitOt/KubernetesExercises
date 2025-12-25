@@ -9,16 +9,16 @@ resources:
   - persistent_volume_claim.yaml
   - deployment.yaml
   - gateway.yaml
-  - ../log_output/manifests/service.yaml
-  - ../read_output/manifests/service.yaml
-  - ../log_output/manifests/http_route.yaml
-  - ../read_output/manifests/http_route.yaml
-  - ../../ping_pong/manifests/statefulset/deployment.yaml
-  - ../../ping_pong/manifests/statefulset/statefulset.yaml
-  - ../../ping_pong/manifests/statefulset/service.yaml
-  - ../../ping_pong/manifests/statefulset/headless_service.yaml
-  - ../../ping_pong/manifests/statefulset/cluster_ip_service.yaml
-  - ../../ping_pong/manifests/statefulset/http_route.yaml
+  - log_output_service.yaml
+  - read_output_service.yaml
+  - log_output_http_route.yaml
+  - read_output_http_route.yaml
+  - ping_pong_deployment.yaml
+  - ping_pong_statefulset.yaml
+  - ping_pong_service.yaml
+  - ping_pong_headless_service.yaml
+  - ping_pong_cluster_ip_service.yaml
+  - ping_pong_http_route.yaml
 
 images:
   - name: DOCKER_REGISTRY/log_output
