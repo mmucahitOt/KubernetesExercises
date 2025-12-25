@@ -78,6 +78,8 @@ jobs:
         run: |
           kustomize edit set image DOCKER_REGISTRY/log_output=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/log_output:${{ env.IMAGE_TAG }}
           kustomize edit set image DOCKER_REGISTRY/read_output=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/read_output:${{ env.IMAGE_TAG }}
+          kustomize edit set image DOCKER_REGISTRY/ping_pong=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/ping_pong:${{ env.IMAGE_TAG }}
+          kustomize edit set image DOCKER_REGISTRY/ping_pong_db=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/ping_pong_db:${{ env.IMAGE_TAG }}
 
       - name: Commit and push updated kustomization.yaml
         run: |
@@ -85,7 +87,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update image tags to ${{ env.IMAGE_TAG }} [skip ci]"
+            git commit -m "chore: update image tags to ${{ env.IMAGE_TAG }}"
             git push
           fi
 

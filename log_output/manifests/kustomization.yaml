@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: exercises
+
+resources:
+  - namespace.yaml
+  - config_map.yaml
+  - persistent_volume_claim.yaml
+  - deployment.yaml
+  - gateway.yaml
+  - ../log_output/manifests/service.yaml
+  - ../read_output/manifests/service.yaml
+  - ../log_output/manifests/http_route.yaml
+  - ../read_output/manifests/http_route.yaml
+  - ../../ping_pong/manifests/statefulset/deployment.yaml
+  - ../../ping_pong/manifests/statefulset/statefulset.yaml
+  - ../../ping_pong/manifests/statefulset/service.yaml
+  - ../../ping_pong/manifests/statefulset/headless_service.yaml
+  - ../../ping_pong/manifests/statefulset/cluster_ip_service.yaml
+  - ../../ping_pong/manifests/statefulset/http_route.yaml
+
+images:
+  - name: DOCKER_REGISTRY/log_output
+    newName: mmucahit0/log_output
+    newTag: amd64-v1
+  - name: DOCKER_REGISTRY/read_output
+    newName: mmucahit0/read_output
+    newTag: amd64-v1
+  - name: DOCKER_REGISTRY/ping_pong
+    newName: mmucahit0/ping_pong
+    newTag: amd64-v1
+  - name: DOCKER_REGISTRY/ping_pong_db
+    newName: mmucahit0/ping_pong_db
+    newTag: amd64-v1
+

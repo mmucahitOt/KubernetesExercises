@@ -10,4 +10,4 @@ spec:
   ports:
     - port: 2346
       protocol: TCP
-      targetPort: ${PING_PONG_PORT}
+      targetPort: 4001

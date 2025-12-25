@@ -10,4 +10,4 @@ spec:
   ports:
     - port: 2347
       protocol: TCP
-      targetPort: ${READ_OUTPUT_PORT}
+      targetPort: 4002

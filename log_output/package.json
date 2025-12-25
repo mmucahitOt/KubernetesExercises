@@ -4,9 +4,10 @@
   "main": "index.js",
   "scripts": {
     "sentRequestToPod": "bash scripts/send_request_to_pod.sh",
-    "deploy": "bash scripts/kubernetes_deploy.sh",
-    "undeploy": "bash scripts/kubernetes_undeploy.sh",
-    "canary-deploy": "bash scripts/canary_release/canary_deploy.sh"
+    "canary-deploy": "bash scripts/canary_release/canary_deploy.sh",
+    "deploy-monitoring": "bash scripts/kubernetes_deploy_monitoring_stack.sh",
+    "build-images": "bash scripts/build-images.sh",
+    "install-argocd": "bash scripts/install_argocd_gke.sh"
   },
   "author": "",
   "license": "ISC",
