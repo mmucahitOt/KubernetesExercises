@@ -55,4 +55,7 @@
 - [4.5](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [4.6](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [4.7](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
-- [4.8](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
+- [4.8
+  ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
+- [4.9](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)[
+  ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
