@@ -1,4 +1,4 @@
-name: Todo App - Build and Push Docker Images
+name: Project - Build and Push Docker Images
 
 on:
   push:

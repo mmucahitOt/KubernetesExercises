@@ -1,4 +1,4 @@
-name: Todo App - GitOps Validation
+name: Project - GitOps Validation
 
 on:
   push:
