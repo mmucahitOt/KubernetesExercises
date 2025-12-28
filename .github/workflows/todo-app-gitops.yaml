@@ -1,0 +1,43 @@
+name: Todo App - GitOps Validation
+
+on:
+  push:
+    paths:
+      - 'todo_app/**'
+  pull_request:
+    paths:
+      - 'todo_app/**'
+
+jobs:
+  validate-manifests:
+    name: Validate Kustomize Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2.1.0
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Validate todo_app Kustomize Build
+        working-directory: todo_app
+        continue-on-error: true
+        run: |
+          if [ -f "kustomization.yaml" ]; then
+            kustomize build . > /dev/null
+            echo "✅ todo_app Kustomize build successful"
+          else
+            echo "ℹ️  No kustomization.yaml found in todo_app"
+          fi
+
+      - name: Validate ArgoCD Application
+        run: |
+          if [ -f "todo_app/argocd/applications/todo-app.yaml" ]; then
+            python3 -c "import yaml; yaml.safe_load(open('todo_app/argocd/applications/todo-app.yaml'))" && echo "✅ todo-app ArgoCD Application manifest YAML syntax is valid"
+          else
+            echo "ℹ️  No ArgoCD Application manifest found"
+          fi
+

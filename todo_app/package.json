@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "deploy": "bash scripts/kubernetes_deploy_with_kustomize.sh",
+    "install-argocd": "bash scripts/install_argocd_gke.sh",
+    "build-images": "bash scripts/build-images.sh",
+    "deploy-monitoring": "bash scripts/kubernetes_deploy_monitoring_stack.sh",
     "undeploy": "bash scripts/kubernetes_undeploy.sh",
     "sentRequestToPod": "bash scripts/send_request_to_pod.sh",
     "canary-deploy-frontend": "bash scripts/canary_release/canary_deploy_frontend.sh",
