@@ -72,8 +72,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "m.mucahit0@gmail.com"
+          git config --local user.name "mmucahitOt"
 
       - name: Update Kustomize image tags
         working-directory: log_output/manifests
