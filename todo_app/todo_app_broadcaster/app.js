@@ -44,8 +44,7 @@ async function sendToDiscord(subject, payload) {
 
 async function start() {
   if (!discordWebhookUrl) {
-    logError("Missing DISCORD_WEBHOOK_URL; broadcaster cannot start");
-    process.exit(1);
+    logWarn("DISCORD_WEBHOOK_URL not configured; broadcaster will log messages only (no external forwarding)");
   }
 
   nc = await initNats();

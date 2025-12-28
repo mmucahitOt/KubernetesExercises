@@ -1,0 +1,54 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app.k8s.io/part-of: todo-app
+
+images:
+  - name: TODO_APP_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app
+  - name: TODO_APP_BACKEND_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_backend
+  - name: TODO_APP_BACKEND_DB_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_backend_db
+  - name: TODO_APP_ADD_JOB_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_add_job
+  - name: TODO_APP_BACKUP_JOB_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_backup_job
+  - name: TODO_APP_BROADCASTER_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_broadcaster
+
+configMapGenerator:
+  - literals:
+      - TODO_APP_PORT=4000
+      - TODO_APP_BACKEND_PORT=4001
+      - RANDOM_IMAGE_PATH=/app/files/image.jpeg
+      - TODO_APP_BACKEND_DB_URL=postgres://todo_user:todo_password@todo-stset-db-svc:5432/todo_db
+      - NATS_URL=nats://nats:4222
+      - DISCORD_WEBHOOK_URL=https://study.cs.helsinki.fi/discord/webhooks/1264842173619109949
+    name: todo-app-configmap
+    options:
+      disableNameSuffixHash: true
+
+resources:
+  - namespace.yaml
+  - ../manifests/backup-serviceaccount.yaml
+  - ../manifests/deployment_backend.yaml
+  - ../manifests/deployment_frontend.yaml
+  - ../manifests/deployment_broadcaster.yaml
+  - ../manifests/statefulset.yaml
+  - ../manifests/headless_service.yaml
+  - ../manifests/ingress.yaml
+  - ../todo_app/manifests/service.yaml
+  - ../todo_app_backend/manifests/service.yaml
+  - ../todo_app_broadcaster/manifests/service.yaml
+  - ../manifests/persistent_volume.yaml
+  - ../manifests/persistent_volume_claim.yaml
+  - ../todo_app_add_job/manifests/todo_app_add_job.yaml
+  - ../todo_app_db_backup_cronjob/manifests/todo_app_db_backup_cronjob.yaml
+  - ../manifests/monitoring/loki-configmap.yaml
+  - ../manifests/monitoring/loki-service.yaml
+  - ../manifests/monitoring/loki-deployment.yaml
+  - ../manifests/nats/deployment_nats.yaml
+  - ../manifests/nats/service.yaml
+

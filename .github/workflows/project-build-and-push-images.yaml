@@ -11,16 +11,26 @@ on:
       - 'todo_app/todo_app_broadcaster/**'
       - 'todo_app/todo_app_frontend/**'
     branches: [main, master]
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Image tag to use (default: commit SHA)'
+        description: 'Image tag to use (default: commit SHA or tag)'
         required: false
         type: string
+      environment:
+        description: 'Environment to update (staging or production)'
+        required: false
+        type: choice
+        options:
+          - staging
+          - production
 
 env:
   REGISTRY: docker.io
-  IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
+  IMAGE_TAG: ${{ github.event.inputs.image_tag || github.ref_type == 'tag' && github.ref_name || github.sha }}
+  ENVIRONMENT: ${{ github.event.inputs.environment || (github.ref_type == 'tag' && 'production' || 'staging') }}
 
 jobs:
   build-and-push:
@@ -113,7 +123,7 @@ jobs:
           git config --local user.name "GitHub Action"
 
       - name: Update Kustomize image tags
-        working-directory: todo_app
+        working-directory: todo_app/overlays/${{ env.ENVIRONMENT }}
         run: |
           kustomize edit set image TODO_APP_IMAGE/TAG=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/todo_app:${{ env.IMAGE_TAG }}
           kustomize edit set image TODO_APP_BACKEND_IMAGE/TAG=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/todo_app_backend:${{ env.IMAGE_TAG }}
@@ -124,11 +134,15 @@ jobs:
 
       - name: Commit and push updated kustomization.yaml
         run: |
-          git add todo_app/kustomization.yaml
+          git add todo_app/overlays/${{ env.ENVIRONMENT }}/kustomization.yaml
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: update todo_app image tags to ${{ env.IMAGE_TAG }}"
-            git push origin HEAD:main
+            git commit -m "chore: update ${{ env.ENVIRONMENT }} image tags to ${{ env.IMAGE_TAG }}"
+            if [ "${{ github.ref_type }}" = "tag" ]; then
+              git push origin HEAD:refs/heads/main
+            else
+              git push origin HEAD:main
+            fi
           fi
 

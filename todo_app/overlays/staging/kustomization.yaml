@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: staging
+
+namePrefix: staging-
+
+resources:
+  - ../../base
+
+images:
+  - name: TODO_APP_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app
+  - name: TODO_APP_BACKEND_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_backend
+  - name: TODO_APP_BACKEND_DB_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_backend_db
+  - name: TODO_APP_ADD_JOB_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_add_job
+  - name: TODO_APP_BACKUP_JOB_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_backup_job
+  - name: TODO_APP_BROADCASTER_IMAGE/TAG
+    newName: docker.io/mmucahit0/todo_app_broadcaster
+
+patches:
+  - path: broadcaster-patch.yaml
+    target:
+      kind: ConfigMap
+      name: todo-app-configmap
+  - path: remove-backup-cronjob.yaml
+    target:
+      kind: CronJob
+      name: todo-app-backup-cronjob
+
+patchesStrategicMerge:
+  - namespace-patch.yaml
+
