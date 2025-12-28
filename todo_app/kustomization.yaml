@@ -8,22 +8,22 @@ commonLabels:
 images:
 - name: TODO_APP_ADD_JOB_IMAGE/TAG
   newName: docker.io/mmucahit0/todo_app_add_job
-  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+  newTag: c6e4e613e2e9ff2150ceef879ec6da5f427f8d6a
 - name: TODO_APP_BACKEND_DB_IMAGE/TAG
   newName: docker.io/mmucahit0/todo_app_backend_db
-  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+  newTag: c6e4e613e2e9ff2150ceef879ec6da5f427f8d6a
 - name: TODO_APP_BACKEND_IMAGE/TAG
   newName: docker.io/mmucahit0/todo_app_backend
-  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+  newTag: c6e4e613e2e9ff2150ceef879ec6da5f427f8d6a
 - name: TODO_APP_BACKUP_JOB_IMAGE/TAG
   newName: docker.io/mmucahit0/todo_app_backup_job
-  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+  newTag: c6e4e613e2e9ff2150ceef879ec6da5f427f8d6a
 - name: TODO_APP_BROADCASTER_IMAGE/TAG
   newName: docker.io/mmucahit0/todo_app_broadcaster
-  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+  newTag: c6e4e613e2e9ff2150ceef879ec6da5f427f8d6a
 - name: TODO_APP_IMAGE/TAG
   newName: docker.io/mmucahit0/todo_app
-  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+  newTag: c6e4e613e2e9ff2150ceef879ec6da5f427f8d6a
 
 configMapGenerator:
 - literals:
