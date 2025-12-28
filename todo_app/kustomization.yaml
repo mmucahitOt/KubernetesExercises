@@ -6,55 +6,61 @@ commonLabels:
   app.k8s.io/part-of: todo-app
 
 images:
-  - name: TODO_APP_IMAGE/TAG
-    newName: mmucahit0/todo_app:amd64-v1
-  - name: TODO_APP_BACKEND_IMAGE/TAG
-    newName: mmucahit0/todo_app_backend:amd64-v1
-  - name: TODO_APP_BROADCASTER_IMAGE/TAG
-    newName: mmucahit0/todo_app_broadcaster:amd64-v1
-  - name: TODO_APP_BACKEND_DB_IMAGE/TAG
-    newName: mmucahit0/todo_app_backend_db:amd64-v1
-  - name: TODO_APP_ADD_JOB_IMAGE/TAG
-    newName: mmucahit0/todo_app_add_job:amd64-v1
-  - name: TODO_APP_BACKUP_JOB_IMAGE/TAG
-    newName: mmucahit0/todo_app_backup_job:amd64-v2 
+- name: TODO_APP_ADD_JOB_IMAGE/TAG
+  newName: docker.io/mmucahit0/todo_app_add_job
+  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+- name: TODO_APP_BACKEND_DB_IMAGE/TAG
+  newName: docker.io/mmucahit0/todo_app_backend_db
+  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+- name: TODO_APP_BACKEND_IMAGE/TAG
+  newName: docker.io/mmucahit0/todo_app_backend
+  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+- name: TODO_APP_BACKUP_JOB_IMAGE/TAG
+  newName: docker.io/mmucahit0/todo_app_backup_job
+  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+- name: TODO_APP_BROADCASTER_IMAGE/TAG
+  newName: docker.io/mmucahit0/todo_app_broadcaster
+  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
+- name: TODO_APP_IMAGE/TAG
+  newName: docker.io/mmucahit0/todo_app
+  newTag: 6e2bed91cc7a963280888c81a63f8b7b29979caa
 
 configMapGenerator:
-  - name: todo-app-configmap
-    literals:
-      - TODO_APP_PORT=4000
-      - TODO_APP_BACKEND_PORT=4001
-      - RANDOM_IMAGE_PATH=/app/files/image.jpeg
-      - TODO_APP_BACKEND_DB_URL=postgres://todo_user:todo_password@todo-stset-db-svc:5432/todo_db
-      - NATS_URL=nats://nats:4222   
-      - DISCORD_WEBHOOK_URL=https://study.cs.helsinki.fi/discord/webhooks/1264842173619109949
-    options:
-      disableNameSuffixHash: true
+- literals:
+  - TODO_APP_PORT=4000
+  - TODO_APP_BACKEND_PORT=4001
+  - RANDOM_IMAGE_PATH=/app/files/image.jpeg
+  - TODO_APP_BACKEND_DB_URL=postgres://todo_user:todo_password@todo-stset-db-svc:5432/todo_db
+  - NATS_URL=nats://nats:4222
+  - DISCORD_WEBHOOK_URL=https://study.cs.helsinki.fi/discord/webhooks/1264842173619109949
+  name: todo-app-configmap
+  options:
+    disableNameSuffixHash: true
+
+  
+  
+
+
+
 
 resources:
-  - manifests/namespace.yaml
-  - manifests/backup-serviceaccount.yaml
-  - manifests/deployment_backend.yaml
-  - manifests/deployment_frontend.yaml
-  - manifests/deployment_broadcaster.yaml
-  - manifests/statefulset.yaml
-  
-  
-  - manifests/headless_service.yaml
-  - manifests/ingress.yaml
-  - todo_app/manifests/service.yaml
-  - todo_app_backend/manifests/service.yaml
-  - todo_app_broadcaster/manifests/service.yaml
-
-  - manifests/persistent_volume.yaml
-  - manifests/persistent_volume_claim.yaml
-  - todo_app_add_job/manifests/todo_app_add_job.yaml
-  - todo_app_db_backup_cronjob/manifests/todo_app_db_backup_cronjob.yaml 
-
-
-  - manifests/monitoring/loki-configmap.yaml
-  - manifests/monitoring/loki-service.yaml
-  - manifests/monitoring/loki-deployment.yaml
-
-  - manifests/nats/deployment_nats.yaml
-  - manifests/nats/service.yaml
+- manifests/namespace.yaml
+- manifests/backup-serviceaccount.yaml
+- manifests/deployment_backend.yaml
+- manifests/deployment_frontend.yaml
+- manifests/deployment_broadcaster.yaml
+- manifests/statefulset.yaml
+- manifests/headless_service.yaml
+- manifests/ingress.yaml
+- todo_app/manifests/service.yaml
+- todo_app_backend/manifests/service.yaml
+- todo_app_broadcaster/manifests/service.yaml
+- manifests/persistent_volume.yaml
+- manifests/persistent_volume_claim.yaml
+- todo_app_add_job/manifests/todo_app_add_job.yaml
+- todo_app_db_backup_cronjob/manifests/todo_app_db_backup_cronjob.yaml
+- manifests/monitoring/loki-configmap.yaml
+- manifests/monitoring/loki-service.yaml
+- manifests/monitoring/loki-deployment.yaml
+- manifests/nats/deployment_nats.yaml
+- manifests/nats/service.yaml
