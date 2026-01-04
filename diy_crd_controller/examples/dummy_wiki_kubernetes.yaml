@@ -1,0 +1,7 @@
+apiVersion: example.com/v1
+kind: DummySite
+metadata:
+  name: wiki-kubernetes-site
+  namespace: default
+spec:
+  website_url: https://en.wikipedia.org/wiki/Kubernetes
