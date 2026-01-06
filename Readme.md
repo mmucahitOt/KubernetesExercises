@@ -60,3 +60,4 @@
 - [4.9](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)[
   ](https://github.com/mmucahitOt/KubernetesExercises/tree/main/todo_app)
 - [5.1](https://github.com/mmucahitOt/KubernetesExercises/tree/main/diy_crd_controller)
+- [5.2](https://github.com/mmucahitOt/KubernetesExercises/tree/main/bookinfo_app)
