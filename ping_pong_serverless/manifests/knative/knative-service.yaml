@@ -1,0 +1,26 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: ping-pong-serverless
+  namespace: exercises
+spec:
+  template:
+    metadata:
+      name: ping-pong-serverless-v1
+    spec:
+      containers:
+      - image: ping_pong_serverless.local:arm64-v1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PING_PONG_SERVERLESS_DB_URL
+          value: "postgres://pingpong_user:pingpong_password@ping-pong-serverless-stset-db-svc:5432/pingpong_db"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+

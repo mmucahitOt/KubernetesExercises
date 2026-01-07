@@ -64,3 +64,4 @@
 - [5.3](https://github.com/mmucahitOt/KubernetesExercises/tree/main/log_output)
 - [5.4](https://github.com/mmucahitOt/KubernetesExercises/tree/main/wikipedia_pages)
 - [5.6](https://github.com/mmucahitOt/KubernetesExercises/tree/main/serverless)
+- [5.7](https://github.com/mmucahitOt/KubernetesExercises/tree/main/ping_pong_serverless)
