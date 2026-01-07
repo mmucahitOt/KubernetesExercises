@@ -1,0 +1,96 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istio
+  namespace: exercises
+  labels:
+    app: istio
+    component: monitoring
+    part-of: log-output
+spec:
+  selector:
+    matchLabels:
+      app: istiod
+  namespaceSelector:
+    matchNames:
+      - istio-system
+  endpoints:
+    - port: http-monitoring
+      interval: 30s
+      path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istio-waypoint
+  namespace: exercises
+  labels:
+    app: istio
+    component: monitoring
+    part-of: log-output
+spec:
+  selector:
+    matchLabels:
+      service.istio.io/canonical-name: waypoint
+  namespaceSelector:
+    matchNames:
+      - exercises
+      - default
+  endpoints:
+    - port: "15021"
+      interval: 30s
+      path: /stats/prometheus
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-proxies
+  namespace: exercises
+  labels:
+    app: istio
+    component: monitoring
+    part-of: log-output
+spec:
+  selector:
+    matchLabels:
+      gateway.istio.io/managed: "istio.io-mesh-controller"
+  namespaceSelector:
+    matchNames:
+      - default
+      - exercises
+  podMetricsEndpoints:
+    - interval: 30s
+      path: /stats/prometheus
+      port: http-envoy-prom
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod_name
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-ztunnel
+  namespace: exercises
+  labels:
+    app: istio
+    component: monitoring
+    part-of: log-output
+spec:
+  selector:
+    matchLabels:
+      app: ztunnel
+  namespaceSelector:
+    matchNames:
+      - istio-system
+  podMetricsEndpoints:
+    - interval: 30s
+      path: /metrics
+      port: "15014"
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod_name
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+

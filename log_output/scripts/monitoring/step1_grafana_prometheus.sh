@@ -30,13 +30,28 @@ print_success "Helm repositories added and updated"
 
 # 2. Install Prometheus + Grafana stack
 print_info "Installing Prometheus + Grafana stack in namespace: ${NAMESPACE}..."
+
+# Check if running on k3d (no storage class)
+if kubectl get storageclass local-path >/dev/null 2>&1; then
+  STORAGE_CLASS="local-path"
+  PERSISTENCE_ENABLED="true"
+else
+  STORAGE_CLASS=""
+  PERSISTENCE_ENABLED="false"
+  print_warning "No storage class found, disabling persistence for k3d compatibility"
+fi
+
 helm install prometheus-stack prometheus-community/kube-prometheus-stack --namespace "${NAMESPACE}" \
   --set grafana.adminPassword=admin123 \
   --set grafana.service.type=ClusterIP \
-  --set grafana.persistence.enabled=true \
+  --set grafana.persistence.enabled=${PERSISTENCE_ENABLED} \
   --set grafana.persistence.size=1Gi \
+  --set grafana.persistence.storageClassName=${STORAGE_CLASS} \
   --set prometheus.prometheusSpec.retention=7d \
   --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage=2Gi \
+  --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.storageClassName=${STORAGE_CLASS} \
+  --set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
   --create-namespace
 
 if [ $? -eq 0 ]; then

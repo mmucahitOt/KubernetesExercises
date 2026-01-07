@@ -3,6 +3,7 @@ const express = require("express");
 const config = require("./utils/config");
 const { generateUUID } = require("./utils/id-generator");
 const { pingPong } = require("./services/ping-pong.service");
+const { getGreeting } = require("./services/greeter.service");
 
 const port = config.port || 3000;
 const app = express();
@@ -26,12 +27,27 @@ app.get("/healthz", async (req, res) => {
 app.get("/logoutput", async (req, res) => {
   const timestamp = new Date().toISOString();
   const count = await pingPong();
+  const greeting = await getGreeting();
   res.send(`
-      file content: ${config.getMessageFromFile()}
-      env variable: MESSAGE=${config.message}
-      ${timestamp}: ${RANDOM_STRING}
-      Ping / Pong: ${count}
+      file content: ${config.getMessageFromFile()} \n
+      env variable: MESSAGE=${config.message} \n
+      ${timestamp}: ${RANDOM_STRING} \n
+      Ping / Pong: ${count} \n
+      greetings: ${greeting}
       `);
+});
+
+app.get("/status", async (req, res) => {
+  const timestamp = new Date().toISOString();
+  const count = await pingPong();
+  const greeting = await getGreeting();
+  res.send(`
+    ${timestamp}: ${RANDOM_STRING}
+    Ping / Pongs: ${count}
+    env-variable: MESSAGE=${config.message}
+    file contents: ${config.getMessageFromFile()}
+    greetings: ${greeting}
+  `);
 });
 
 app.listen(port, () => {

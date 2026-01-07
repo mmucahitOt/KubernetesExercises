@@ -22,6 +22,7 @@ console.log("LOG_OUTPUT_PORT:", process.env.LOG_OUTPUT_PORT);
 module.exports = {
   port: process.env.LOG_OUTPUT_PORT,
   pingPortServiceUrl: process.env.PING_PONG_URL,
+  greeterUrl: process.env.GREETER_URL,
   message: process.env.MESSAGE,
   getMessageFromFile,
 };

@@ -26,7 +26,7 @@ spec:
       containers:
         - name: log-output-container
           image: DOCKER_REGISTRY/log_output:amd64-v1
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           volumeMounts:
           - name: log-output-config-vol  
             mountPath: "/config"
@@ -40,7 +40,9 @@ spec:
             - name: LOG_FILE_PATH
               value: "/usr/src/app/files/log.txt"
             - name: PING_PONG_URL
-              value: "http://ping-pong-svc:2346"
+              value: "http://ping-pong-deployment-svc:2346"
+            - name: GREETER_URL
+              value: "http://greeter-svc:3000"
             - name: INFORMATION_FILE_NAME
               valueFrom:
                 configMapKeyRef:
@@ -69,7 +71,7 @@ spec:
             periodSeconds: 5
         - name: read-output-container
           image: DOCKER_REGISTRY/read_output:amd64-v1
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           volumeMounts:
           - name: shared-log-file
             mountPath: /usr/src/app/files
@@ -79,7 +81,7 @@ spec:
             - name: LOG_FILE_PATH
               value: "/usr/src/app/files/log.txt"
           ports:
-            - name: http
+            - name: read-http
               containerPort: 4002
           resources:
             requests:

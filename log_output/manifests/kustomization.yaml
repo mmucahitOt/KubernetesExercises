@@ -19,17 +19,25 @@ resources:
 - ping_pong_headless_service.yaml
 - ping_pong_cluster_ip_service.yaml
 - ping_pong_http_route.yaml
+- greeter-v1-deployment.yaml
+- greeter-v2-deployment.yaml
+- greeter-svc.yaml
+- greeter-svc-1.yaml
+- greeter-svc-2.yaml
+- greeter-http-route.yaml
 
 images:
 - name: DOCKER_REGISTRY/log_output
   newName: docker.io/mmucahit0/log_output
-  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
+  newTag: arm64-v1
 - name: DOCKER_REGISTRY/ping_pong
   newName: docker.io/mmucahit0/ping_pong
-  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
+  newTag: arm64-v1
 - name: DOCKER_REGISTRY/ping_pong_db
   newName: docker.io/mmucahit0/ping_pong_db
-  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
+  newTag: arm64-v1
 - name: DOCKER_REGISTRY/read_output
   newName: docker.io/mmucahit0/read_output
-  newTag: c1abc1c83fdcdbc17e2854f05931688fba200489
+  newTag: arm64-v1
+- name: DOCKER_REGISTRY/greeter
+  newName: docker.io/mmucahit0/greeter

@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-sidecars
+  namespace: exercises
+  labels:
+    app: istio
+    component: monitoring
+    part-of: log-output
+spec:
+  selector:
+    matchLabels:
+      security.istio.io/tlsMode: istio
+  namespaceSelector:
+    matchNames:
+      - exercises
+  podMetricsEndpoints:
+    - interval: 30s
+      path: /stats/prometheus
+      port: http-envoy-prom
+
+
