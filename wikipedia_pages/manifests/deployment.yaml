@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikipedia-pages
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wikipedia-pages
+  template:
+    metadata:
+      labels:
+        app: wikipedia-pages
+    spec:
+      initContainers:
+      - name: init-download
+        image: curlimages/curl:latest
+        command: ['/bin/sh', '/scripts/init-download.sh']
+        volumeMounts:
+        - name: www-content
+          mountPath: /www
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+      - name: sidecar-updater
+        image: curlimages/curl:latest
+        restartPolicy: Always
+        command: ['/bin/sh', '/scripts/sidecar-update.sh']
+        volumeMounts:
+        - name: www-content
+          mountPath: /www
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - name: http
+          containerPort: 80
+        volumeMounts:
+        - name: www-content
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: www-content
+        emptyDir: {}
+      - name: scripts
+        configMap:
+          name: wikipedia-scripts
+          defaultMode: 0755
+

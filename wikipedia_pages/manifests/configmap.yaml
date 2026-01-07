@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wikipedia-scripts
+  namespace: default
+data:
+  init-download.sh: |
+    #!/bin/sh
+    set -e
+    curl -L -o /www/index.html https://en.wikipedia.org/wiki/Kubernetes
+  sidecar-update.sh: |
+    #!/bin/sh
+    set -e
+    WAIT_TIME=$((RANDOM % 601 + 300))
+    echo "Waiting $WAIT_TIME seconds (between 5-15 minutes) before downloading random page..."
+    sleep $WAIT_TIME
+    echo "Downloading random Wikipedia page..."
+    curl -L -o /www/index.html https://en.wikipedia.org/wiki/Special:Random
+    echo "Random page downloaded and saved"
+
